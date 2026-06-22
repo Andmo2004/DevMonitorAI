@@ -34,7 +34,35 @@ cd devmonitor-ai
 
 ---
 
-## 2. Variables de entorno
+## Instalación Rápida (Recomendado)
+
+Dispones de un script de configuración rápida (`setup.sh`) que se encarga de instalar y preparar todo automáticamente. El script realiza los siguientes pasos de forma secuencial:
+1. Copia `.env.example` a `.env` (si no existe).
+2. Levanta la base de datos y la API con Docker en segundo plano.
+3. Crea un entorno virtual de Python, instala dependencias, ejecuta las migraciones de la BD y carga los datos de prueba (`seed`).
+4. Instala las dependencias de Node.js para el frontend.
+
+Para usarlo, otorga permisos de ejecución al script y ejecútalo:
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+Una vez que el script finalice correctamente, solo tendrás que iniciar el servidor de desarrollo del frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Si prefieres realizar la instalación paso a paso, puedes seguir la **Instalación Manual** a continuación.
+
+---
+
+## Instalación Manual
+
+### 2. Variables de entorno
 
 ```bash
 cp .env.example .env
