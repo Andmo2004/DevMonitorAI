@@ -4,6 +4,33 @@ set -e
 echo "🚀 Iniciando instalación rápida de DevMonitorAI..."
 
 # 1. Variables de entorno
+echo "🔍 Comprobando dependencias locales..."
+
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python3 no está instalado. Se requiere Python >= 3.12."
+    exit 1
+fi
+python_version=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+if [ "$(printf '%s\n' "3.12" "$python_version" | sort -V | head -n1)" != "3.12" ]; then
+    echo "⚠️  Aviso: Se recomienda Python >= 3.12 (Detectado $python_version)"
+else
+    echo "✅ Python $python_version detectado."
+fi
+
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js no está instalado. Se requiere Node >= 20."
+    exit 1
+fi
+node_version=$(node -v | cut -d 'v' -f 2 | cut -d '.' -f 1)
+if [ "$node_version" -lt 20 ]; then
+    echo "⚠️  Aviso: Se recomienda Node.js >= 20 (Detectado $node_version)"
+else
+    echo "✅ Node.js v$node_version detectado."
+fi
+
+echo ""
+
+# 2. Configurar Variables de entorno
 if [ ! -f .env ]; then
   echo "📄 Creando archivo .env desde .env.example..."
   cp .env.example .env
