@@ -1,5 +1,6 @@
-import axios, { AxiosInstance } from "axios";
-import type { KPIResponse, InsightResponse, AIEventCreate } from "../types/api";
+import axios from "axios";
+import type { AxiosInstance } from "axios";
+import type { KPIResponse, InsightResponse, AIEventCreate, GitEventCreate } from "../types/api";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
@@ -55,6 +56,11 @@ export const getLatestInsight = async (): Promise<InsightResponse | null> => {
 // --- Eventos IA (para el agente) ---
 export const postAIEvent = async (event: AIEventCreate): Promise<void> => {
   await api.post("/events/ai", event);
+};
+
+// --- Eventos Git ---
+export const postGitEvent = async (event: GitEventCreate): Promise<void> => {
+  await api.post("/events/git", event);
 };
 
 export default api;

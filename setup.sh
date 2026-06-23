@@ -63,8 +63,8 @@ else
     pip install -r requirements.txt
 fi
 
-# echo "🗄️ Aplicando migraciones de base de datos..."
-# alembic upgrade head
+echo "🗄️ Aplicando migraciones de base de datos..."
+alembic upgrade head
 
 echo "🌱 Cargando datos de prueba (seed)..."
 python ../scripts/seed_demo.py
