@@ -47,3 +47,15 @@ export interface AIEventCreate {
   repo?: string;
   session_id?: string;
 }
+
+export interface GitEventCreate {
+  user_id: number;
+  commit_sha: string;
+  commit_message?: string;
+  repo: string;
+  branch?: string;
+  files_changed?: number;
+  insertions?: number;
+  deletions?: number;
+  timestamp: string;
+}
