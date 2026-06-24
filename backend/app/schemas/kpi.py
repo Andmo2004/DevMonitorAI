@@ -29,3 +29,6 @@ class KPIResponse(BaseModel):
     daily_usage: list[DailyUsage]
     prompt_type_distribution: list[PromptTypeDistribution]
     correlation_data: list[CorrelationPoint]
+    period_from: str       
+    period_to: str          
+    top_users: list[dict]   

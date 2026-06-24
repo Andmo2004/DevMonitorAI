@@ -4,6 +4,7 @@ from sqlalchemy import func, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.services.metrics import compute_ai_git_kpi
 from app.core.database import get_db
 from app.models import AIEvent, GitEvent
 from app.schemas.kpi import (
@@ -123,17 +124,14 @@ async def get_kpis(
         for d in all_dates
     ]
 
-    # Ratio de correlación simple (promedio commits / promedio sesiones IA)
-    avg_commits = sum(git_map.values()) / max(len(git_map), 1)
-    avg_tokens = sum(ai_map.values()) / max(len(ai_map), 1)
-    correlation_ratio = round(avg_commits / max(avg_tokens / 1000, 0.01), 2)
+    kpi = await compute_ai_git_kpi(db, since)
 
     return KPIResponse(
         total_tokens=total_tokens,
         total_cost_eur=round(total_cost_eur, 4),
         total_sessions=total_sessions,
         most_frequent_prompt_type=most_frequent,
-        correlation_ratio=correlation_ratio,
+        correlation_ratio=kpi["commit_ai_ratio"],
         daily_usage=daily_usage,
         prompt_type_distribution=prompt_type_distribution,
         correlation_data=correlation_data,

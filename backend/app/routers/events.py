@@ -8,6 +8,9 @@ from app.schemas.ai_event import AIEventCreate, AIEventResponse
 from app.schemas.git_event import GitEventCreate, GitEventResponse
 from app.core.pricing import calculate_cost_eur
 
+# para controlar que timestamp si llega None no anule el post
+from datetime import datetime, timezone
+
 router = APIRouter(prefix="/events", tags=["events"])
 
 
@@ -27,7 +30,7 @@ async def create_ai_event(event: AIEventCreate, db: AsyncSession = Depends(get_d
         cost_eur=cost_eur,
         session_id=event.session_id,
         repo=event.repo,
-        timestamp=event.timestamp,
+        timestamp=event.timestamp or datetime.now(timezone.utc),
     )
     db.add(db_event)
     await db.flush()
