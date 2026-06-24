@@ -4,9 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.metrics import compute_ai_git_kpi
 from app.core.database import get_db
-from app.schemas.kpi import KPIResponse
+from app.schemas.kpi import KPIResponse, DailyUsage, PromptTypeDistribution, CorrelationPoint
 from app.services.metrics import calculate_kpis
-
+from datetime import datetime, timezone, timedelta
+from sqlalchemy import select, func, cast, Date
+from app.models import AIEvent, GitEvent
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
@@ -130,4 +132,7 @@ async def get_dashboard_kpis(
         daily_usage=daily_usage,
         prompt_type_distribution=prompt_type_distribution,
         correlation_data=correlation_data,
+        period_from=since.isoformat(),
+        period_to=datetime.now(timezone.utc).isoformat(),
+        top_users=[],
     )
