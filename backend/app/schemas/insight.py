@@ -1,10 +1,10 @@
-"""Schemas Pydantic para insights generados por IA."""
 from datetime import datetime
 from pydantic import BaseModel
 
 
-class InsightCreate(BaseModel):
-    period: str = "week"  # "week" | "month"
+class InsightGenerateRequest(BaseModel):
+    period: str = "week"
+    user_id: int | None = None  # None = insight global del equipo
 
 
 class InsightResponse(BaseModel):
@@ -13,6 +13,7 @@ class InsightResponse(BaseModel):
     period_start: datetime
     period_end: datetime
     model_used: str
+    tokens_used: int | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

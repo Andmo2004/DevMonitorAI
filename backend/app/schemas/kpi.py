@@ -25,6 +25,9 @@ class KPIResponse(BaseModel):
     total_cost_eur: float
     total_sessions: int
     most_frequent_prompt_type: str
+    correlated_commits_count: int = 0
+    total_commits: int = 0
+    correlated_commits_ratio: float = 0.0
     correlation_ratio: float
     daily_usage: list[DailyUsage]
     prompt_type_distribution: list[PromptTypeDistribution]
