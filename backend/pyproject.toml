@@ -1,0 +1,24 @@
+[project]
+name = "devmonitor-ai-backend"
+version = "1.0.0"
+description = "devmonitor·AI — Gobierno y control del uso de IA en desarrollo"
+requires-python = ">=3.12"
+
+[tool.pyrefly]
+python_version = "3.12"
+search_path = ["."]
+venv_path = ".venv"
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]

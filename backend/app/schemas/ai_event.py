@@ -33,11 +33,13 @@ class AIEventResponse(BaseModel):
     user_id: int
     model_id: str
     prompt_type: str
+    prompt_text: str | None = None
+    response_text: str | None = None
     tokens_in: int
     tokens_out: int
     cost_eur: float
-    session_id: str | None
-    repo: str | None
+    session_id: str | None = None
+    repo: str | None = None
     timestamp: datetime
     created_at: datetime
 

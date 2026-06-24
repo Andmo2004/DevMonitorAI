@@ -1,28 +1,23 @@
 """Router para el dashboard de KPIs."""
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
 from app.services.metrics import compute_ai_git_kpi
 from app.core.database import get_db
-from app.models import AIEvent, GitEvent
-from app.schemas.kpi import (
-    KPIResponse,
-    DailyUsage,
-    PromptTypeDistribution,
-    CorrelationPoint,
-)
-
-from datetime import datetime, timedelta, timezone
+from app.schemas.kpi import KPIResponse
+from app.services.metrics import calculate_kpis
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
-@router.get("/kpis", response_model=KPIResponse)
-async def get_kpis(
-    user_id: int | None = Query(None, description="Filtrar por usuario (None = todos)"),
-    days: int = Query(14, ge=1, le=90, description="Número de días hacia atrás"),
+@router.get(
+    "/kpis",
+    response_model=KPIResponse,
+    summary="Obtener KPIs del dashboard",
+)
+async def get_dashboard_kpis(
+    user_id: int | None = Query(None, description="ID del usuario (None = todos)"),
+    days: int = Query(default=14, ge=1, le=90, description="Número de días a analizar"),
     db: AsyncSession = Depends(get_db),
 ):
     """Obtener KPIs agregados del dashboard."""

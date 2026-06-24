@@ -20,10 +20,12 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    team: Mapped[str | None] = mapped_column(String(100), nullable=True)
     role: Mapped[str] = mapped_column(String(50), nullable=False, default="developer")
     api_key_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     anonymize: Mapped[bool] = mapped_column(Boolean, default=False)
     cost_alert_eur_day: Mapped[float | None] = mapped_column(Float, nullable=True)
+    retention_days: Mapped[int] = mapped_column(default=30, server_default="30")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
