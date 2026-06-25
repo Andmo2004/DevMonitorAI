@@ -120,3 +120,6 @@ Write-Host ""
 Write-Host "La API ya está corriendo en http://localhost:8000"
 Write-Host "El frontend estará disponible en http://localhost:5173"
 Write-Host "Documentacion de la API en http://localhost:8000/docs"
+
+Write-Host "Instalando git hook post-commit..."
+Copy-Item "scripts/git_hook.py" ".git/hooks/post-commit"

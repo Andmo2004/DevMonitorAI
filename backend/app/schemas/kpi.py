@@ -20,6 +20,13 @@ class CorrelationPoint(BaseModel):
     git_commits: int
 
 
+class GitCorrelation(BaseModel):
+    prompts_before_commit: int
+    avg_per_commit: float
+    correlated_commits: int
+    total_commits: int
+
+
 class KPIResponse(BaseModel):
     total_tokens: int
     total_cost_eur: float
@@ -34,4 +41,5 @@ class KPIResponse(BaseModel):
     correlation_data: list[CorrelationPoint]
     period_from: str       
     period_to: str          
-    top_users: list[dict]   
+    top_users: list[dict]  
+    git_correlation: GitCorrelation 

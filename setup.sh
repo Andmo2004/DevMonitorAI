@@ -69,6 +69,10 @@ alembic upgrade head
 echo "🌱 Cargando datos de prueba (seed)..."
 python ../scripts/seed_demo.py
 
+echo "🪝 Instalando git hook post-commit..."
+cp scripts/git_hook.py .git/hooks/post-commit
+chmod +x .git/hooks/post-commit
+
 cd ..
 
 # 4. Frontend Setup

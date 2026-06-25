@@ -222,6 +222,15 @@ async def test_kpis_correlation_ratio(client, populated_user):
     # Todos los días tienen IA y Git, así que ratio debería ser 100%
     assert data["correlation_ratio"] == 100.0
 
+@pytest.mark.asyncio
+async def test_kpis_git_correlation_block(client, populated_user):
+    response = await client.get(f"/api/v1/dashboard/kpis?user_id={populated_user.id}&days=14")
+    data = response.json()
+    gc = data["git_correlation"]
+    assert gc["total_commits"] == data["total_commits"]
+    assert gc["correlated_commits"] == data["correlated_commits_count"]
+    assert gc["avg_per_commit"] >= 0
+    assert gc["prompts_before_commit"] >= gc["correlated_commits"]
 
 @pytest.mark.asyncio
 async def test_kpis_nonexistent_user(client):

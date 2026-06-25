@@ -91,7 +91,7 @@ async def generate_weekly_insight(summary_dict: dict) -> tuple[str, int]:
     prompt = build_insight_prompt(summary_dict)
 
     message = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-sonnet-4-6",
         max_tokens=1000,
         messages=[
             {"role": "user", "content": prompt}
