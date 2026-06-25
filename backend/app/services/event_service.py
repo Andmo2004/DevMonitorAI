@@ -6,6 +6,7 @@ y valida la existencia del usuario antes de persistir.
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from datetime import datetime, timezone
 
 from app.models import User, AIEvent, GitEvent
 from app.schemas.ai_event import AIEventCreate
@@ -60,7 +61,7 @@ async def create_ai_event(db: AsyncSession, event_data: AIEventCreate) -> AIEven
         cost_eur=cost_eur,
         session_id=event_data.session_id,
         repo=event_data.repo,
-        timestamp=event_data.timestamp,
+        timestamp=event_data.timestamp or datetime.now(timezone.utc)
     )
 
     db.add(ai_event)

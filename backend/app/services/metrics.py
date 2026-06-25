@@ -1,58 +1,86 @@
 """
 Servicio de cálculo de métricas y KPIs.
-
-Agrega datos de ai_events y git_events para generar los KPIs
-del dashboard principal: tokens, costes, sesiones, distribución
-por tipo de prompt, tendencia diaria y correlación IA ↔ Git.
+Única fuente de verdad para los KPIs del dashboard: tokens, costes, sesiones,
+distribución por tipo de prompt, tendencia diaria, top usuarios y correlación
+IA ↔ Git en ventana de ±30 minutos.
 """
 from datetime import datetime, timedelta, timezone
-from collections.abc import Sequence
 from collections import defaultdict
+from collections.abc import Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
-from app.models import AIEvent, GitEvent
+from app.models import AIEvent, GitEvent, User
 from app.schemas.kpi import (
     KPIResponse,
     DailyUsage,
     PromptTypeDistribution,
     CorrelationPoint,
+    GitCorrelation
 )
+
+CORRELATION_WINDOW_MINUTES = 30
 
 
 def calculate_ai_git_correlation(
     ai_events: Sequence[AIEvent],
     git_events: Sequence[GitEvent],
-    window_minutes: int = 30,
-) -> tuple[int, int]:
+    window_minutes: int = CORRELATION_WINDOW_MINUTES,
+)-> tuple[int, int, int, float]:
     """
-    Calcula cuántos commits fueron precedidos por uso de IA
-    en una ventana de tiempo configurable.
+    Calcula la correlación IA↔Git en una ventana de tiempo configurable.
 
     Returns:
-        Tuple de (commits_correlacionados, total_commits)
+        Tuple de (commits_correlacionados, total_commits, prompts_before_commit,
+        avg_per_commit). 'prompts_before_commit' es la suma de eventos IA del
+        MISMO usuario que caen en la ventana de cada commit (un evento IA puede
+        contar para varios commits si están muy seguidos en el tiempo).
     """
     if not git_events or not ai_events:
-        return 0, len(git_events)
+        return 0, len(git_events), 0, 0.0
 
     window = timedelta(minutes=window_minutes)
     correlated = 0
-
+    total_prompts_before_commit = 0
     for git_event in git_events:
-        commit_time = git_event.timestamp
-        window_start = commit_time - window
+        window_start = git_event.timestamp - window
+        # Importante: filtrar por user_id — si no, en la vista global se
+        # correlacionan eventos IA de un desarrollador con commits de otro.
+        matching = [
+            e for e in ai_events
+            if e.user_id == git_event.user_id
+            and window_start <= e.timestamp <= git_event.timestamp
+        ]
+        if matching:
+             correlated += 1
+        total_prompts_before_commit += len(matching)
 
-        # Buscar si hay algún evento IA en la ventana [commit-30min, commit]
-        has_preceding_ai = any(
-            window_start <= ai_event.timestamp <= commit_time
-            for ai_event in ai_events
+    total_commits = len(git_events)
+    avg_per_commit = round(total_prompts_before_commit / total_commits, 2) if total_commits else 0.0
+    return correlated, total_commits, total_prompts_before_commit, avg_per_commit
+
+
+async def _top_users(db: AsyncSession, since: datetime, limit: int = 5) -> list[dict]:
+    """Top usuarios por tokens consumidos en el período (solo vista global)."""
+    rows = (
+        await db.execute(
+            select(
+                User.username,
+                func.coalesce(func.sum(AIEvent.tokens_in + AIEvent.tokens_out), 0).label("tokens"),
+                func.coalesce(func.sum(AIEvent.cost_eur), 0.0).label("cost_eur"),
+            )
+            .join(AIEvent, AIEvent.user_id == User.id)
+            .where(AIEvent.timestamp >= since)
+            .group_by(User.username)
+            .order_by(func.sum(AIEvent.tokens_in + AIEvent.tokens_out).desc())
+            .limit(limit)
         )
-
-        if has_preceding_ai:
-            correlated += 1
-
-    return correlated, len(git_events)
+    ).all()
+    return [
+        {"username": r.username, "tokens": int(r.tokens), "cost_eur": round(float(r.cost_eur), 4)}
+        for r in rows
+    ]
 
 
 async def calculate_kpis(
@@ -60,72 +88,38 @@ async def calculate_kpis(
     user_id: int | None = None,
     days: int = 14,
 ) -> KPIResponse:
-    """
-    Calcula los KPIs principales para un usuario en los últimos N días.
-
-    Métricas calculadas:
-    - Tokens totales (suma de tokens_in + tokens_out)
-    - Coste total en EUR
-    - Número de sesiones únicas
-    - Tipo de prompt más frecuente
-    - Uso diario (para la serie temporal)
-    - Distribución por tipo de prompt
-    - Datos de correlación con Git
-
-    Args:
-        db: Sesión de base de datos asíncrona.
-        user_id: ID del usuario (None = todos los usuarios).
-        days: Número de días a analizar hacia atrás.
-
-    Returns:
-        KPIResponse con todas las métricas agregadas.
-    """
     since = datetime.now(tz=timezone.utc) - timedelta(days=days)
+    now = datetime.now(tz=timezone.utc)
 
-    # --- Query de eventos IA ---
     ai_query = select(AIEvent).where(AIEvent.timestamp >= since)
     if user_id is not None:
         ai_query = ai_query.where(AIEvent.user_id == user_id)
-    ai_query = ai_query.order_by(AIEvent.timestamp)
+    ai_events = (await db.execute(ai_query.order_by(AIEvent.timestamp))).scalars().all()
 
-    ai_result = await db.execute(ai_query)
-    ai_events = ai_result.scalars().all()
-
-    # --- Query de eventos Git ---
     git_query = select(GitEvent).where(GitEvent.timestamp >= since)
     if user_id is not None:
         git_query = git_query.where(GitEvent.user_id == user_id)
-    git_query = git_query.order_by(GitEvent.timestamp)
+    git_events = (await db.execute(git_query.order_by(GitEvent.timestamp))).scalars().all()
 
-    git_result = await db.execute(git_query)
-    git_events = git_result.scalars().all()
-
-    # --- Aggregaciones ---
     total_tokens = sum(e.tokens_in + e.tokens_out for e in ai_events)
     total_cost_eur = sum(e.cost_eur for e in ai_events)
-    sessions = len(set(e.session_id for e in ai_events if e.session_id)) or len(ai_events)
+    sessions = len({e.session_id for e in ai_events if e.session_id}) or len(ai_events)
 
-    # Distribución por tipo de prompt
     prompt_counts: dict[str, int] = defaultdict(int)
     for event in ai_events:
         prompt_counts[event.prompt_type] += 1
 
-    total_events = len(ai_events) or 1  # Evitar división por cero
-    most_frequent = max(prompt_counts, key=lambda k: prompt_counts[k]) if prompt_counts else "N/A"
+    total_events = len(ai_events) or 1
+    most_frequent = max(prompt_counts, key=prompt_counts.get) if prompt_counts else "N/A"
 
     prompt_distribution = [
         PromptTypeDistribution(
-            prompt_type=pt,
-            count=count,
-            percentage=round(count / total_events * 100, 1),
+            prompt_type=pt, count=count, percentage=round(count / total_events * 100, 1)
         )
         for pt, count in sorted(prompt_counts.items(), key=lambda x: -x[1])
     ]
 
-    # Uso diario (agrupar por día)
-    daily_data: dict[str, dict] = defaultdict(
-        lambda: {"tokens": 0, "cost_eur": 0.0, "sessions": set()}
-    )
+    daily_data: dict[str, dict] = defaultdict(lambda: {"tokens": 0, "cost_eur": 0.0, "sessions": set()})
     for event in ai_events:
         day_key = event.timestamp.strftime("%Y-%m-%d")
         daily_data[day_key]["tokens"] += event.tokens_in + event.tokens_out
@@ -135,22 +129,16 @@ async def calculate_kpis(
 
     daily_usage = [
         DailyUsage(
-            date=day,
-            tokens=data["tokens"],
-            cost_eur=round(data["cost_eur"], 4),
-            sessions=len(data["sessions"]) or 1,
+            date=day, tokens=d["tokens"], cost_eur=round(d["cost_eur"], 4), sessions=len(d["sessions"]) or 1
         )
-        for day, data in sorted(daily_data.items())
+        for day, d in sorted(daily_data.items())
     ]
 
-    # Datos de correlación IA ↔ Git
     git_by_day: dict[str, int] = defaultdict(int)
-    for git_event in git_events:
-        day_key = git_event.timestamp.strftime("%Y-%m-%d")
-        git_by_day[day_key] += 1
+    for g in git_events:
+        git_by_day[g.timestamp.strftime("%Y-%m-%d")] += 1
 
-    # Combinar días de IA y Git para la correlación
-    all_days = sorted(set(list(daily_data.keys()) + list(git_by_day.keys())))
+    all_days = sorted(set(daily_data) | set(git_by_day))
     correlation_data = [
         CorrelationPoint(
             date=day,
@@ -160,19 +148,16 @@ async def calculate_kpis(
         for day in all_days
     ]
 
-    # Ratio de correlación: porcentaje de días con IA que también tienen commits
-    ai_days = set(daily_data.keys())
-    git_days = set(git_by_day.keys())
+    ai_days, git_days = set(daily_data), set(git_by_day)
     both_days = ai_days & git_days
-    correlation_ratio = (
-        round(len(both_days) / len(ai_days) * 100, 1) if ai_days else 0.0
-    )
+    correlation_ratio = round(len(both_days) / len(ai_days) * 100, 1) if ai_days else 0.0
 
-    # Correlación temporal IA ↔ Git
-    correlated, total_commits = calculate_ai_git_correlation(ai_events, git_events)
-    correlation_ratio_commits = (
-        round(correlated / total_commits * 100, 1) if total_commits > 0 else 0.0
-    )
+    correlated, total_commits, prompts_before_commit, avg_per_commit = (
+        calculate_ai_git_correlation(ai_events, git_events))
+    
+    correlated_commits_ratio = round(correlated / total_commits * 100, 1) if total_commits else 0.0
+
+    top_users = await _top_users(db, since) if user_id is None else []
 
     return KPIResponse(
         total_tokens=total_tokens,
@@ -181,45 +166,18 @@ async def calculate_kpis(
         most_frequent_prompt_type=most_frequent,
         correlated_commits_count=correlated,
         total_commits=total_commits,
-        correlated_commits_ratio=correlation_ratio_commits,
+        correlated_commits_ratio=correlated_commits_ratio,
         correlation_ratio=correlation_ratio,
+        git_correlation=GitCorrelation(
+            prompts_before_commit=prompts_before_commit,
+            avg_per_commit=avg_per_commit,
+            correlated_commits=correlated,
+            total_commits=total_commits,
+        ),
         daily_usage=daily_usage,
         prompt_type_distribution=prompt_distribution,
         correlation_data=correlation_data,
+        period_from=since.date().isoformat(),
+        period_to=now.date().isoformat(),
+        top_users=top_users,
     )
-
-from sqlalchemy import text
-
-async def get_ai_git_correlation(db, since):
-    query = text("""
-        SELECT
-            ge.id,
-            ge.user_id,
-            COALESCE(ai.count, 0) AS ai_prompts_30min
-        FROM git_events ge
-        LEFT JOIN LATERAL (
-            SELECT COUNT(*) AS count
-            FROM ai_events ae
-            WHERE ae.user_id = ge.user_id
-                AND ae.timestamp BETWEEN ge.timestamp - INTERVAL '30 minutes'
-                                    AND ge.timestamp
-        ) ai ON true
-        WHERE ge.timestamp >= :since
-    """)
-
-    result = await db.execute(query, {"since": since})
-    return result.fetchall()
-
-async def compute_ai_git_kpi(db, since):
-    rows = await get_ai_git_correlation(db, since)
-
-    total_commits = len(rows)
-    total_ai_prompts = sum(r.ai_prompts_30min for r in rows)
-    commits_with_ai = len([r for r in rows if r.ai_prompts_30min > 0])
-
-    return {
-        "avg_prompts_per_commit": total_ai_prompts / max(total_commits, 1),
-        "commit_ai_ratio": commits_with_ai / max(total_commits, 1),
-        "total_commits": total_commits,
-        "total_ai_prompts": total_ai_prompts
-    }

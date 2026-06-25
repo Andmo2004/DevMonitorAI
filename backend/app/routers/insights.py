@@ -88,8 +88,9 @@ async def generate_insight(
         period_start=now - timedelta(days=days),
         period_end=now,
         content=content,
-        model_used="claude-3-5-sonnet-20241022",
+        model_used="claude-sonnet-4-6",
         tokens_used=tokens_used,
+        summary_json = summary
     )
     db.add(insight)
     await db.flush()
