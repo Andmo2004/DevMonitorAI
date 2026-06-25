@@ -1,8 +1,10 @@
 """Router para eventos de IA y Git."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.database import get_db
+from app.models import AIEvent
 from app.schemas.ai_event import AIEventCreate, AIEventResponse
 from app.schemas.git_event import GitEventCreate, GitEventResponse
 from app.services.event_service import create_ai_event, create_git_event
@@ -75,3 +77,25 @@ async def register_git_event(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al registrar el evento git: {str(e)}",
         )
+
+
+@router.get(
+    "/ai/recent",
+    response_model=list[AIEventResponse],
+    summary="Obtener los eventos IA más recientes",
+)
+async def get_recent_ai_events(
+    limit: int = Query(default=20, ge=1, le=100, description="Número de eventos a devolver"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Devuelve los últimos N eventos de IA ordenados por timestamp descendente.
+    Utilizado por el EventFeed del frontend para mostrar actividad en tiempo real.
+    """
+    result = await db.execute(
+        select(AIEvent)
+        .order_by(AIEvent.timestamp.desc())
+        .limit(limit)
+    )
+    events = result.scalars().all()
+    return events

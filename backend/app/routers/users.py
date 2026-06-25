@@ -81,3 +81,26 @@ async def list_users(
     users = result.scalars().all()
     # return list of users directly, sqlalchemy returns sequence which is compatible
     return users
+
+
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar usuario",
+)
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Usuario con ID {user_id} no encontrado",
+        )
+
+    await db.delete(user)
+    await db.flush()
+    return None
