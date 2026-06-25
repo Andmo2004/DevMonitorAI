@@ -1,3 +1,200 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===================================================================
+   DevMonitor·AI — Liquid Glass Design System
+   Dark-only theme with OKLCH color tokens, aurora backgrounds,
+   glass surfaces, and fluid animations.
+   =================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* ── Core palette ── */
+  --background:        #000004;
+  --foreground:        #e8e6f0;
+  --card:              rgba(26, 39, 76, 0.45);
+  --popover:           rgba(16, 24, 56, 0.92);
+  --primary:           #838ffa;
+  --primary-rgb:       131, 143, 250;
+  --secondary:         rgba(72, 88, 157, 0.40);
+  --muted-foreground:  #a0a0c8;
+  --accent:            rgba(72, 88, 157, 0.55);
+  --destructive:       #f06060;
+  --border:            rgba(180, 180, 230, 0.14);
+  --glass-border:      rgba(200, 200, 240, 0.22);
+  --ring:              #838ffa;
+
+  /* ── Chart colors ── */
+  --chart-1: #838ffa;   /* Violeta principal */
+  --chart-2: #5c6bc0;   /* Azul-índigo */
+  --chart-3: #b8b8f0;   /* Lila claro */
+  --chart-4: #3d5afe;   /* Azul profundo */
+  --chart-5: #ce93d8;   /* Malva */
+
+  /* ── Semantic ── */
+  --success:  #66bb6a;
+  --warning:  #ffa726;
+  --info:     #42a5f5;
+
+  /* ── Spacing / radius ── */
+  --radius: 1rem;
+}
+
+/* ── Aurora background ── */
+body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 15% 0%, rgba(72, 88, 157, 0.28), transparent),
+    radial-gradient(ellipse 70% 50% at 95% 10%, rgba(131, 143, 250, 0.20), transparent),
+    radial-gradient(ellipse 90% 70% at 50% 110%, rgba(62, 75, 140, 0.22), transparent);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+@layer components {
+  /* ── Glass surface ── */
+  .glass {
+    background: linear-gradient(
+      150deg,
+      rgba(72, 88, 157, 0.18),
+      rgba(26, 20, 56, 0.26)
+    );
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      0 8px 32px rgba(2, 2, 20, 0.45),
+      inset 0 1px 0 rgba(220, 220, 255, 0.14),
+      inset 0 -1px 0 rgba(2, 2, 20, 0.30);
+  }
+
+  /* ── Hover elevation ── */
+  .glass-hover {
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .glass-hover:hover {
+    transform: translateY(-3px);
+    border-color: rgba(131, 143, 250, 0.55);
+    box-shadow:
+      0 16px 48px rgba(2, 2, 20, 0.55),
+      0 0 0 1px rgba(131, 143, 250, 0.25),
+      inset 0 1px 0 rgba(220, 220, 255, 0.20),
+      inset 0 -1px 0 rgba(2, 2, 20, 0.30);
+  }
+
+  /* ── Sheen sweep ── */
+  .glass-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .glass-sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .glass-sheen:hover::after {
+    transform: translateX(120%);
+  }
+}
+
+/* ── Animations ── */
+@keyframes float-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.float-in {
+  animation: float-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0);
+  }
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  animation: pulse-ring 2s ease infinite;
+}
+
+@keyframes fade-highlight {
+  from {
+    background-color: rgba(var(--primary-rgb), 0.15);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.row-highlight {
+  animation: fade-highlight 2s ease-out forwards;
+}
+
+/* ── Glow button ── */
+.glow-active {
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.40);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 200, 0.20);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 200, 0.35);
+}
+
+/* ── Tabular nums for KPI values ── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .float-in {
+    animation: none;
+    opacity: 1;
+  }
+  .live-dot {
+    animation: none;
+  }
+  .glass-sheen::after {
+    display: none;
+  }
+  .glass-hover:hover {
+    transform: none;
+  }
+}

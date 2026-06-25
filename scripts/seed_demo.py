@@ -141,8 +141,9 @@ def generate_git_events_for_day(
 
 
 async def seed():
-    # async with engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.create_all)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
 
     async with AsyncSessionLocal() as session:
         print("🌱 Iniciando seed de datos demo...")
