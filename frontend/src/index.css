@@ -50,7 +50,7 @@ body {
     radial-gradient(ellipse 70% 50% at 95% 10%, rgba(131, 143, 250, 0.20), transparent),
     radial-gradient(ellipse 90% 70% at 50% 110%, rgba(62, 75, 140, 0.22), transparent);
   background-attachment: fixed;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 @layer components {
@@ -197,4 +197,77 @@ body {
   .glass-hover:hover {
     transform: none;
   }
+}
+
+/* ── Apple-style Sidebar ── */
+:root {
+  --apple-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --anim-duration: 0.3s;
+}
+
+.apple-sidebar {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  width: 260px;
+  height: calc(100dvh - 40px);
+  z-index: 100;
+  border-radius: 16px;
+  overflow: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: width, height, border-radius, transform;
+  transition: 
+    width var(--anim-duration) var(--apple-spring),
+    height var(--anim-duration) var(--apple-spring),
+    border-radius var(--anim-duration) var(--apple-spring),
+    padding var(--anim-duration) var(--apple-spring),
+    background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+
+  /* Custom transparency and blur for the sidebar */
+  background: linear-gradient(150deg, rgba(72, 88, 157, 0.08), rgba(26, 20, 56, 0.15)) !important;
+  backdrop-filter: blur(10px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(200%) !important;
+}
+
+.apple-sidebar.collapsed {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+}
+
+.apple-sidebar.collapsed:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, width var(--anim-duration) var(--apple-spring);
+}
+
+.sidebar-content-wrapper {
+  width: 260px;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.apple-sidebar.collapsed .sidebar-content-wrapper {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-name-transition {
+  opacity: 1;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.apple-sidebar.collapsed .app-name-transition {
+  opacity: 0;
+}
+
+.main-content-transition {
+  transition: margin-left var(--anim-duration) var(--apple-spring);
+  will-change: margin-left;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
