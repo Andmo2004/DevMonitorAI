@@ -102,3 +102,60 @@ async def generate_weekly_insight(summary_dict: dict) -> tuple[str, int]:
     tokens_used = message.usage.input_tokens + message.usage.output_tokens
 
     return content, tokens_used
+
+
+async def chat_with_analyst(
+    question: str,
+    summary_dict: dict | None = None,
+) -> tuple[str, int, str]:
+    """
+    Chat interactivo con Claude actuando como analista de datos del dashboard.
+
+    Args:
+        question: Pregunta del usuario.
+        summary_dict: Contexto de datos del dashboard (opcional).
+
+    Returns:
+        Tuple de (respuesta: str, tokens_usados: int, modelo: str)
+    """
+    client = get_anthropic_client()
+    model = "claude-sonnet-4-6"
+
+    context_block = ""
+    if summary_dict:
+        context_block = f"""
+Datos actuales del dashboard:
+- Tokens consumidos: {summary_dict.get('total_tokens', 'N/A')}
+- Coste estimado: {summary_dict.get('total_cost_eur', 'N/A')} EUR
+- Sesiones: {summary_dict.get('total_sessions', 'N/A')}
+- Usuarios activos: {summary_dict.get('num_users', 'N/A')}
+- Commits totales: {summary_dict.get('total_commits', 'N/A')}
+- Commits correlacionados con IA: {summary_dict.get('correlated_commits_count', 'N/A')} ({summary_dict.get('correlated_commits_ratio', 'N/A')}%)
+- Período: {summary_dict.get('period', 'N/A')}
+"""
+
+    system_prompt = f"""Eres un analista de datos senior especializado en el dashboard de DevMonitor·AI, una plataforma de gobernanza y monitorización del uso de inteligencia artificial en equipos de desarrollo de software.
+
+Tu rol es responder preguntas sobre los datos del dashboard de forma clara, concisa y accionable. Basa tus respuestas en los datos proporcionados cuando estén disponibles.
+
+Directrices:
+- Responde siempre en español.
+- Sé conciso pero informativo (máximo 3-4 párrafos).
+- Si los datos son insuficientes para responder, indícalo claramente.
+- Ofrece recomendaciones concretas cuando sea apropiado.
+- Usa un tono profesional pero accesible.
+{context_block}"""
+
+    message = client.messages.create(
+        model=model,
+        max_tokens=800,
+        system=system_prompt,
+        messages=[
+            {"role": "user", "content": question}
+        ],
+    )
+
+    answer = message.content[0].text  # type: ignore[attr-defined]
+    tokens_used = message.usage.input_tokens + message.usage.output_tokens
+
+    return answer, tokens_used, model

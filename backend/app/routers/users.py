@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.models import User
-from app.schemas.user import UserPolicyUpdate, UserResponse
+from app.schemas.user import UserPolicyUpdate, UserResponse, PaginatedUserResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -71,16 +71,34 @@ async def get_user(
 
 @router.get(
     "/",
-    response_model=list[UserResponse],
-    summary="Listar todos los usuarios",
+    response_model=PaginatedUserResponse,
+    summary="Listar todos los usuarios con paginación y búsqueda",
 )
 async def list_users(
+    search: str = "",
+    limit: int = 10,
+    offset: int = 0,
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(User))
+    from sqlalchemy import func
+    
+    query = select(User)
+    count_query = select(func.count()).select_from(User)
+    
+    if search:
+        search_filter = User.username.ilike(f"%{search}%")
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
+        
+    query = query.limit(limit).offset(offset)
+    
+    result = await db.execute(query)
     users = result.scalars().all()
-    # return list of users directly, sqlalchemy returns sequence which is compatible
-    return users
+    
+    count_result = await db.execute(count_query)
+    total_count = count_result.scalar() or 0
+    
+    return PaginatedUserResponse(items=list(users), total_count=total_count)
 
 
 @router.delete(

@@ -3,6 +3,7 @@ import { Layout } from "./components/layout";
 import Dashboard from "./pages/Dashboard";
 import Governance from "./pages/Governance";
 import Insights from "./pages/Insights";
+import Predictions from "./pages/Predictions";
 import "./App.css";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/governance" element={<Governance />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/predictions" element={<Predictions />} />
         </Route>
       </Routes>
     </BrowserRouter>

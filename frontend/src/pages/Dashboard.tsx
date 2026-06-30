@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDashboardData, type TimeRange } from "../hooks/use-dashboard-data";
+import { getUsers } from "../api/client";
 import { KpiCard } from "../components/kpi-card";
 import { WidgetPanel } from "../components/widget-panel";
 import { CorrelationChart } from "../components/charts/correlation-chart";
 import { TrendChart } from "../components/charts/trend-chart";
 import { CostBarChart } from "../components/charts/cost-bar-chart";
 import { PromptTypeDonut } from "../components/charts/prompt-type-donut";
+import { WeeklyAverageChart } from "../components/charts/weekly-average-chart";
 import { InsightPanel } from "../components/insight-panel";
 import { EventFeed } from "../components/event-feed";
 import { formatCompact, formatEUR, cn } from "../lib/utils";
+import type { UserResponse } from "../types/api";
 
 const RANGES: { value: TimeRange; label: string }[] = [
   { value: "7", label: "7 días" },
@@ -19,18 +22,73 @@ const RANGES: { value: TimeRange; label: string }[] = [
 const Dashboard = () => {
   const [range, setRange] = useState<TimeRange>("14");
   const [live, setLive] = useState(true);
-  const { kpis, insight, loading, error } = useDashboardData(range, live);
+  const [selectedUserId, setSelectedUserId] = useState<number | undefined>(
+    undefined
+  );
+  const [users, setUsers] = useState<UserResponse[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const { kpis, insight, loading, error } = useDashboardData(
+    range,
+    live,
+    10_000,
+    selectedUserId
+  );
+
+  // Load users for the selector
+  useEffect(() => {
+    getUsers()
+      .then((res) => setUsers(res.items || []))
+      .catch(() => {});
+  }, []);
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  const selectedUser = users.find((u) => u.id === selectedUserId);
+
+  const weeklyAverages = kpis ? (() => {
+    const sums = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    
+    kpis.daily_usage.forEach((d) => {
+      const [year, month, dayStr] = d.date.split('-');
+      const dateObj = new Date(Number(year), Number(month) - 1, Number(dayStr));
+      const day = dateObj.getDay();
+      if (day >= 1 && day <= 5) {
+        sums[day as keyof typeof sums] += d.tokens;
+        counts[day as keyof typeof counts] += 1;
+      }
+    });
+
+    const labels = ["L", "M", "X", "J", "V"];
+    return [1, 2, 3, 4, 5].map((day, idx) => ({
+      day: labels[idx],
+      avgTokens: counts[day as keyof typeof counts] > 0 
+        ? Math.round(sums[day as keyof typeof sums] / counts[day as keyof typeof counts])
+        : 0
+    }));
+  })() : [];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 float-in">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold text-dm-foreground tracking-tight">
             Dashboard
           </h1>
           <p className="text-sm text-dm-muted-foreground mt-1">
             Monitorización del uso de IA en desarrollo
+            {selectedUser && (
+              <span className="ml-2 text-xs text-dm-primary font-medium">
+                · {selectedUser.username}
+              </span>
+            )}
             {kpis && (
               <span className="ml-2 text-xs text-dm-muted-foreground/70">
                 · {kpis.period_from} → {kpis.period_to}
@@ -39,6 +97,8 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Filter Bar moved down for better z-index */}
+
           {/* Range selector */}
           <div className="flex items-center glass rounded-2xl p-1" role="tablist">
             {RANGES.map((r) => (
@@ -85,6 +145,108 @@ const Dashboard = () => {
           </button>
         </div>
       </header>
+
+      {/* Filter Bar - Alta prioridad visual y z-index */}
+      <div className="relative z-50 flex items-center gap-4 bg-dm-secondary/20 p-3 rounded-2xl border border-dm-glass-border">
+        <div className="text-xs font-semibold text-dm-muted-foreground uppercase tracking-wider ml-2">
+          Filtro de Usuario:
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setShowUserDropdown(!showUserDropdown)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl glass glass-hover text-sm font-medium text-dm-foreground min-w-[220px] text-left border border-dm-primary/30"
+          >
+            <svg
+              className="w-4 h-4 text-dm-primary flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"
+              />
+            </svg>
+            <span className="truncate">
+              {selectedUser ? selectedUser.username : "Todos los usuarios (Global)"}
+            </span>
+            <svg
+              className={cn(
+                "w-4 h-4 text-dm-primary ml-auto transition-transform",
+                showUserDropdown && "rotate-180"
+              )}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+              />
+            </svg>
+          </button>
+          
+          {/* Dropdown flotante */}
+          {showUserDropdown && (
+            <div className="absolute top-full mt-2 left-0 w-72 glass rounded-2xl border border-dm-glass-border shadow-2xl z-[100] overflow-hidden">
+              <div className="p-3 border-b border-dm-glass-border bg-black/20">
+                <input
+                  type="text"
+                  placeholder="Buscar usuario..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-dm-glass-border text-sm text-dm-foreground placeholder:text-dm-muted-foreground focus:outline-none focus:border-dm-primary/50"
+                  autoFocus
+                />
+              </div>
+              <div className="max-h-60 overflow-y-auto py-2">
+                <button
+                  onClick={() => {
+                    setSelectedUserId(undefined);
+                    setShowUserDropdown(false);
+                    setUserSearch("");
+                  }}
+                  className={cn(
+                    "w-full px-4 py-3 text-left text-sm hover:bg-white/10 transition-colors border-b border-dm-glass-border/50",
+                    selectedUserId === undefined
+                      ? "text-dm-primary font-semibold bg-dm-primary/10"
+                      : "text-dm-foreground"
+                  )}
+                >
+                  Todos los usuarios (Global)
+                </button>
+                {filteredUsers.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => {
+                      setSelectedUserId(user.id);
+                      setShowUserDropdown(false);
+                      setUserSearch("");
+                    }}
+                    className={cn(
+                      "w-full px-4 py-3 text-left text-sm hover:bg-white/10 transition-colors flex items-center gap-2",
+                      selectedUserId === user.id
+                        ? "text-dm-primary font-semibold bg-dm-primary/10"
+                        : "text-dm-foreground"
+                    )}
+                  >
+                    <span>{user.username}</span>
+                    {user.team && (
+                      <span className="text-dm-muted-foreground/60 text-xs">
+                        · {user.team}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Error banner */}
       {error && (
@@ -269,13 +431,28 @@ const Dashboard = () => {
                 </div>
               </WidgetPanel>
             )}
+
+            {/* Weekly Averages Chart */}
+            <WidgetPanel
+              title="Promedio semanal"
+              subtitle="Uso de tokens por día laborable"
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+              }
+              className="lg:col-span-2"
+              style={{ animationDelay: "580ms" }}
+            >
+              <WeeklyAverageChart data={weeklyAverages} />
+            </WidgetPanel>
           </section>
 
           {/* Insight Panel */}
           <InsightPanel initialInsight={insight} />
 
           {/* Event Feed */}
-          <EventFeed pollInterval={live ? 5000 : 60000} />
+          <EventFeed pollInterval={live ? 5000 : 60000} userId={selectedUserId} />
         </>
       ) : null}
     </div>

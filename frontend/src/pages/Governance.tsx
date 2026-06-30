@@ -11,17 +11,28 @@ const Governance = () => {
   const [toast, setToast] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserResponse | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Pagination & Search States
+  const [search, setSearch] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [search, pageSize, page]);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const data = await getUsers();
-      setUsers(data);
+      setError(null);
+      const data = await getUsers(search, pageSize, page * pageSize);
+      setUsers(data.items);
+      setTotalCount(data.total_count);
     } catch (err) {
       console.error("Error fetching users:", err);
+      setError("Error de conexión con el servidor. Verifica que el backend está corriendo (localhost:8000).");
     } finally {
       setLoading(false);
     }
@@ -98,18 +109,53 @@ const Governance = () => {
         </div>
       </GlassCard>
 
+      {/* Search and Pagination Controls */}
+      <div className="flex flex-col sm:flex-row gap-4 float-in">
+        <div className="relative flex-1 max-w-md">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dm-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar usuarios..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-dm-secondary/30 border border-dm-glass-border text-sm text-dm-foreground placeholder:text-dm-muted-foreground focus:outline-none focus:border-dm-primary/50 transition-colors"
+          />
+        </div>
+        <div className="relative w-48">
+          <select
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
+            className="w-full pl-3 pr-9 py-2 rounded-xl bg-dm-secondary/30 border border-dm-glass-border text-sm text-dm-foreground focus:outline-none focus:border-dm-primary/50 transition-colors appearance-none cursor-pointer"
+          >
+            <option value={10}>10 por página</option>
+            <option value={20}>20 por página</option>
+            <option value={50}>50 por página</option>
+          </select>
+          <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dm-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+
       {/* Users list */}
+      {error && (
+        <div className="glass rounded-2xl p-4 border border-dm-destructive/30 text-dm-destructive text-sm float-in">
+          {error}
+        </div>
+      )}
       {loading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="glass rounded-3xl p-6 h-40 animate-pulse" />
           ))}
         </div>
-      ) : users.length === 0 ? (
+      ) : users.length === 0 && !error ? (
         <GlassCard className="p-8 text-center">
           <p className="text-dm-muted-foreground">No hay usuarios registrados.</p>
         </GlassCard>
-      ) : (
+      ) : !error && (
         <div className="space-y-4">
           {users.map((user, i) => (
             <GlassCard
@@ -244,6 +290,31 @@ const Governance = () => {
               </div>
             </GlassCard>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Bottom */}
+      {!loading && totalCount > 0 && (
+        <div className="flex justify-between items-center float-in" style={{ animationDelay: "300ms" }}>
+          <p className="text-sm text-dm-muted-foreground">
+            Mostrando {page * pageSize + 1} a {Math.min((page + 1) * pageSize, totalCount)} de {totalCount} usuarios
+          </p>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="px-4 py-2 rounded-xl bg-dm-secondary/30 hover:bg-dm-secondary/50 border border-dm-glass-border text-dm-foreground disabled:opacity-50 text-sm font-medium transition-all"
+            >
+              Anterior
+            </button>
+            <button 
+              onClick={() => setPage(p => p + 1)}
+              disabled={(page + 1) * pageSize >= totalCount}
+              className="px-4 py-2 rounded-xl bg-dm-secondary/30 hover:bg-dm-secondary/50 border border-dm-glass-border text-dm-foreground disabled:opacity-50 text-sm font-medium transition-all"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
       )}
 

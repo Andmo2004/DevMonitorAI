@@ -115,8 +115,50 @@ export interface UserResponse {
   retention_days: number;
 }
 
+export interface PaginatedUserResponse {
+  items: UserResponse[];
+  total_count: number;
+}
+
 export interface UserPolicyUpdate {
   anonymize?: boolean;
   cost_alert_eur_day?: number | null;
   retention_days?: number;
 }
+
+/* ─── Predictions ─── */
+
+export interface PredictionPoint {
+  date: string;
+  value: number;
+  upper_bound: number;
+  lower_bound: number;
+  is_prediction: boolean;
+}
+
+export interface PredictionSeries {
+  metric: string;
+  unit: string;
+  points: PredictionPoint[];
+}
+
+export interface PredictionResponse {
+  tokens: PredictionSeries;
+  cost: PredictionSeries;
+  model_used: string;
+  confidence_level: number;
+}
+
+/* ─── Chat ─── */
+
+export interface ChatRequest {
+  question: string;
+  summary_json?: Record<string, unknown> | null;
+}
+
+export interface ChatResponse {
+  answer: string;
+  tokens_used: number;
+  model_used: string;
+}
+

@@ -28,9 +28,10 @@ const PROMPT_TYPE_COLORS: Record<string, string> = {
 
 interface EventFeedProps {
   pollInterval?: number; // ms
+  userId?: number;
 }
 
-export function EventFeed({ pollInterval = 5000 }: EventFeedProps) {
+export function EventFeed({ pollInterval = 5000, userId }: EventFeedProps) {
   const [events, setEvents] = useState<AIEventResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [newIds, setNewIds] = useState<Set<number>>(new Set());
@@ -41,7 +42,7 @@ export function EventFeed({ pollInterval = 5000 }: EventFeedProps) {
 
     const fetchEvents = async () => {
       try {
-        const data = await getRecentEvents(20);
+        const data = await getRecentEvents(20, userId);
         if (!mounted) return;
 
         // Detect new events for highlight animation
@@ -71,7 +72,7 @@ export function EventFeed({ pollInterval = 5000 }: EventFeedProps) {
       mounted = false;
       clearInterval(interval);
     };
-  }, [pollInterval]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pollInterval, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <GlassCard className="p-5 float-in" style={{ animationDelay: "600ms" }}>

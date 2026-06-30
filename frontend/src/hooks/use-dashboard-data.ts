@@ -15,7 +15,8 @@ interface DashboardData {
 export function useDashboardData(
   range: TimeRange = "14",
   live: boolean = true,
-  pollInterval: number = 10_000
+  pollInterval: number = 10_000,
+  userId?: number
 ): DashboardData {
   const [kpis, setKpis] = useState<KPIResponse | null>(null);
   const [insight, setInsight] = useState<InsightResponse | null>(null);
@@ -26,8 +27,8 @@ export function useDashboardData(
   const fetchData = useCallback(async () => {
     try {
       const [kpiData, insightData] = await Promise.all([
-        getKPIs(undefined, parseInt(range)),
-        getLatestInsight(),
+        getKPIs(userId, parseInt(range)),
+        getLatestInsight(userId),
       ]);
       setKpis(kpiData);
       setInsight(insightData);
@@ -38,9 +39,9 @@ export function useDashboardData(
     } finally {
       setLoading(false);
     }
-  }, [range]);
+  }, [range, userId]);
 
-  // Initial load + range change
+  // Initial load + range/userId change
   useEffect(() => {
     setLoading(true);
     fetchData();

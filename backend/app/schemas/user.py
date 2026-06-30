@@ -29,3 +29,8 @@ class UserResponse(BaseModel):
     retention_days: int
 
     model_config = {"from_attributes": True}
+
+
+class PaginatedUserResponse(BaseModel):
+    items: list[UserResponse]
+    total_count: int

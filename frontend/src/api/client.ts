@@ -7,7 +7,10 @@ import type {
   AIEventResponse,
   GitEventCreate,
   UserResponse,
+  PaginatedUserResponse,
   UserPolicyUpdate,
+  PredictionResponse,
+  ChatResponse,
 } from "../types/api";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -42,6 +45,19 @@ export const getKPIs = async (
   return data;
 };
 
+// --- Predictions ---
+export const getPredictions = async (
+  userId?: number,
+  daysHistory: number = 60
+): Promise<PredictionResponse> => {
+  const params: Record<string, unknown> = { days_history: daysHistory };
+  if (userId !== undefined) params.user_id = userId;
+  const { data } = await api.get<PredictionResponse>("/dashboard/predictions", {
+    params,
+  });
+  return data;
+};
+
 // --- Insights ---
 export const generateInsight = async (
   period: "week" | "month" = "week",
@@ -69,16 +85,31 @@ export const getLatestInsight = async (
   }
 };
 
+// --- Chat con IA ---
+export const chatWithInsights = async (
+  question: string,
+  summaryJson?: Record<string, unknown> | null
+): Promise<ChatResponse> => {
+  const { data } = await api.post<ChatResponse>("/insights/chat", {
+    question,
+    summary_json: summaryJson ?? null,
+  });
+  return data;
+};
+
 // --- Eventos IA ---
 export const postAIEvent = async (event: AIEventCreate): Promise<void> => {
   await api.post("/events/ai", event);
 };
 
 export const getRecentEvents = async (
-  limit: number = 20
+  limit: number = 20,
+  userId?: number
 ): Promise<AIEventResponse[]> => {
+  const params: Record<string, unknown> = { limit };
+  if (userId !== undefined) params.user_id = userId;
   const { data } = await api.get<AIEventResponse[]>("/events/ai/recent", {
-    params: { limit },
+    params,
   });
   return data;
 };
@@ -89,8 +120,14 @@ export const postGitEvent = async (event: GitEventCreate): Promise<void> => {
 };
 
 // --- Users ---
-export const getUsers = async (): Promise<UserResponse[]> => {
-  const { data } = await api.get<UserResponse[]>("/users/");
+export const getUsers = async (
+  search: string = "",
+  limit: number = 10,
+  offset: number = 0
+): Promise<PaginatedUserResponse> => {
+  const { data } = await api.get<PaginatedUserResponse>("/users/", {
+    params: { search, limit, offset },
+  });
   return data;
 };
 
