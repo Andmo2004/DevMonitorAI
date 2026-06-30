@@ -26,6 +26,7 @@ export function GlassTooltip({
             {typeof entry.value === "number"
               ? entry.value.toLocaleString("es-ES")
               : entry.value}
+            {entry.unit && ` ${entry.unit}`}
           </span>
         </div>
       ))}

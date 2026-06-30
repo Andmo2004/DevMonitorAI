@@ -7,7 +7,8 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.models import Insight, User
 from app.schemas.insight import InsightGenerateRequest, InsightResponse
-from app.services.insight_engine import generate_weekly_insight
+from app.schemas.chat import ChatRequest, ChatResponse
+from app.services.insight_engine import generate_weekly_insight, chat_with_analyst
 from app.services.metrics import calculate_kpis
 
 router = APIRouter(prefix="/insights", tags=["insights"])
@@ -126,3 +127,46 @@ async def get_latest_insight(
         )
 
     return insight
+
+
+@router.post(
+    "/chat",
+    response_model=ChatResponse,
+    summary="Chat interactivo con el analista IA",
+)
+async def chat_with_ai(
+    request: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Envía una pregunta al analista IA (Claude) con contexto de datos del dashboard.
+
+    Si no se envía summary_json, se genera un contexto fresco a partir de los KPIs actuales.
+    """
+    summary = request.summary_json
+
+    # Si no se envía contexto, generar uno fresco
+    if summary is None:
+        try:
+            summary = await build_summary_from_kpis(db, user_id=None, days=7)
+        except HTTPException:
+            summary = None
+        except Exception:
+            summary = None
+
+    try:
+        answer, tokens_used, model_used = await chat_with_analyst(
+            question=request.question,
+            summary_dict=summary,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Error al comunicarse con el analista IA: {str(e)}",
+        )
+
+    return ChatResponse(
+        answer=answer,
+        tokens_used=tokens_used,
+        model_used=model_used,
+    )

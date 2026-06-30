@@ -86,16 +86,17 @@ async def register_git_event(
 )
 async def get_recent_ai_events(
     limit: int = Query(default=20, ge=1, le=100, description="Número de eventos a devolver"),
+    user_id: int | None = Query(default=None, description="Filtrar por usuario (None = todos)"),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Devuelve los últimos N eventos de IA ordenados por timestamp descendente.
     Utilizado por el EventFeed del frontend para mostrar actividad en tiempo real.
+    Si se especifica user_id, filtra los eventos de ese usuario.
     """
-    result = await db.execute(
-        select(AIEvent)
-        .order_by(AIEvent.timestamp.desc())
-        .limit(limit)
-    )
+    query = select(AIEvent).order_by(AIEvent.timestamp.desc()).limit(limit)
+    if user_id is not None:
+        query = query.where(AIEvent.user_id == user_id)
+    result = await db.execute(query)
     events = result.scalars().all()
     return events
