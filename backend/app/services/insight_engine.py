@@ -16,11 +16,11 @@ settings = get_settings()
 _client = None
 
 
-def get_anthropic_client() -> anthropic.Anthropic:
-    """Singleton del cliente Anthropic para reutilizar la conexión."""
+def get_anthropic_client() -> anthropic.AsyncAnthropic:
+    """Singleton del cliente Anthropic async para reutilizar la conexión."""
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        _client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     return _client
 
 
@@ -90,7 +90,7 @@ async def generate_weekly_insight(summary_dict: dict) -> tuple[str, int]:
     client = get_anthropic_client()
     prompt = build_insight_prompt(summary_dict)
 
-    message = client.messages.create(
+    message = await client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=1000,
         messages=[
@@ -146,7 +146,7 @@ Directrices:
 - Usa un tono profesional pero accesible.
 {context_block}"""
 
-    message = client.messages.create(
+    message = await client.messages.create(
         model=model,
         max_tokens=800,
         system=system_prompt,
@@ -159,3 +159,4 @@ Directrices:
     tokens_used = message.usage.input_tokens + message.usage.output_tokens
 
     return answer, tokens_used, model
+

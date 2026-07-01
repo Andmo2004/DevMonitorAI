@@ -1,12 +1,43 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.security import verify_api_key
 from app.models import User
 from app.schemas.user import UserPolicyUpdate, UserResponse, PaginatedUserResponse
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(verify_api_key)])
+
+
+async def verify_admin_role(
+    db: AsyncSession,
+    admin_user_id: int | None,
+) -> None:
+    """
+    Verifica que el usuario que realiza la acción tiene rol 'admin'.
+    RBAC básico para proteger operaciones destructivas.
+    """
+    if admin_user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requiere la cabecera X-Admin-User-Id para esta operación",
+        )
+
+    result = await db.execute(select(User).where(User.id == admin_user_id))
+    admin = result.scalar_one_or_none()
+
+    if admin is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario administrador no encontrado",
+        )
+
+    if admin.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Se requiere rol 'admin' para esta operación (rol actual: '{admin.role}')",
+        )
 
 
 @router.post(
@@ -18,6 +49,7 @@ async def update_user_policy(
     user_id: int,
     policy: UserPolicyUpdate,
     db: AsyncSession = Depends(get_db),
+    x_admin_user_id: int | None = Header(default=None, alias="X-Admin-User-Id"),
 ):
     """
     Configura las políticas de gobernanza para un usuario:
@@ -27,7 +59,10 @@ async def update_user_policy(
     - **retention_days**: Días de retención de los eventos (cumplimiento RGPD).
 
     Solo se actualizan los campos que se envíen en el body (PATCH semántico).
+    Requiere rol 'admin' (cabecera X-Admin-User-Id).
     """
+    await verify_admin_role(db, x_admin_user_id)
+
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
 
@@ -109,7 +144,14 @@ async def list_users(
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
+    x_admin_user_id: int | None = Header(default=None, alias="X-Admin-User-Id"),
 ):
+    """
+    Elimina un usuario y todos sus datos asociados (cascade).
+    Requiere rol 'admin' (cabecera X-Admin-User-Id).
+    """
+    await verify_admin_role(db, x_admin_user_id)
+
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
 

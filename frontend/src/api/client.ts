@@ -3,6 +3,7 @@ import type { AxiosInstance } from "axios";
 import type {
   KPIResponse,
   InsightResponse,
+  PaginatedInsightResponse,
   AIEventCreate,
   AIEventResponse,
   GitEventCreate,
@@ -83,6 +84,19 @@ export const getLatestInsight = async (
   } catch {
     return null;
   }
+};
+
+export const getInsights = async (
+  limit: number = 10,
+  offset: number = 0,
+  userId?: number
+): Promise<PaginatedInsightResponse> => {
+  const params: Record<string, unknown> = { limit, offset };
+  if (userId !== undefined) params.user_id = userId;
+  const { data } = await api.get<PaginatedInsightResponse>("/insights/", {
+    params,
+  });
+  return data;
 };
 
 // --- Chat con IA ---

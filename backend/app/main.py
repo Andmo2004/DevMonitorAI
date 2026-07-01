@@ -1,10 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import get_settings
+from app.core.logging_config import setup_logging
+from app.core.rate_limit import limiter
 from app.routers import events, dashboard, insights, users
 
 settings = get_settings()
+
+# Configurar logging estructurado al arranque
+setup_logging(debug=settings.debug)
 
 app = FastAPI(
     title="devmonitor·AI API",
@@ -14,10 +21,14 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Configuración CORS
+# Rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Configuración CORS — orígenes gestionados 100% por variables de entorno
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.cors_origin, "http://localhost:3000", "http://192.168.1.56:5173"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

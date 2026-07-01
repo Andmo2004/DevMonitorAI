@@ -208,6 +208,10 @@ def _build_prediction_series(
 
     return PredictionSeries(metric=metric_key, unit=unit, points=points)
 
+# --- Caché TTL simple para predicciones ---
+_prediction_cache: dict[tuple, tuple[float, "PredictionResponse"]] = {}
+_CACHE_TTL_SECONDS = 300  # 5 minutos
+
 
 async def generate_predictions(
     db: AsyncSession,
@@ -216,6 +220,7 @@ async def generate_predictions(
 ) -> PredictionResponse:
     """
     Genera predicciones para tokens y coste usando Prophet.
+    Resultados cacheados durante 5 minutos por (user_id, days_history).
 
     Args:
         db: Sesión de base de datos asíncrona.
@@ -225,6 +230,17 @@ async def generate_predictions(
     Returns:
         PredictionResponse con series de tokens y coste.
     """
+    import time
+
+    cache_key = (user_id, days_history)
+    now = time.monotonic()
+
+    # Verificar caché
+    if cache_key in _prediction_cache:
+        cached_time, cached_result = _prediction_cache[cache_key]
+        if now - cached_time < _CACHE_TTL_SECONDS:
+            return cached_result
+
     daily_data = await _fetch_daily_aggregates(db, user_id, days_history)
 
     # _build_prediction_series es CPU-bound. Prophet/cmdstanpy a menudo falla
@@ -238,9 +254,14 @@ async def generate_predictions(
         _build_prediction_series, daily_data, "cost_eur", "EUR", 15, 2
     )
 
-    return PredictionResponse(
+    result = PredictionResponse(
         tokens=tokens_series,
         cost=cost_series,
         model_used="Prophet",
         confidence_level=0.9,
     )
+
+    # Guardar en caché
+    _prediction_cache[cache_key] = (now, result)
+
+    return result

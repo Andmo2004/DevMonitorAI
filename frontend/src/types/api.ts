@@ -62,6 +62,11 @@ export interface InsightResponse {
   created_at: string;
 }
 
+export interface PaginatedInsightResponse {
+  items: InsightResponse[];
+  total_count: number;
+}
+
 /* ─── Events ─── */
 
 export interface AIEventCreate {

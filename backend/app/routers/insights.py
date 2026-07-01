@@ -1,17 +1,23 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+logger = logging.getLogger("devmonitor.insights")
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from starlette.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.security import verify_api_key
+from app.core.rate_limit import limiter
 from app.models import Insight, User
-from app.schemas.insight import InsightGenerateRequest, InsightResponse
+from app.schemas.insight import InsightGenerateRequest, InsightResponse, PaginatedInsightResponse
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.insight_engine import generate_weekly_insight, chat_with_analyst
 from app.services.metrics import calculate_kpis
 
-router = APIRouter(prefix="/insights", tags=["insights"])
+router = APIRouter(prefix="/insights", tags=["insights"], dependencies=[Depends(verify_api_key)])
 
 
 async def build_summary_from_kpis(db: AsyncSession, user_id: int | None, days: int) -> dict:
@@ -60,8 +66,10 @@ async def build_summary_from_kpis(db: AsyncSession, user_id: int | None, days: i
     status_code=status.HTTP_201_CREATED,
     summary="Generar insight semanal con IA",
 )
+@limiter.limit("5/minute")
 async def generate_insight(
     request: InsightGenerateRequest,
+    http_request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -77,10 +85,13 @@ async def generate_insight(
     try:
         summary = await build_summary_from_kpis(db, request.user_id, days)
         content, tokens_used = await generate_weekly_insight(summary)
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.exception("Error al generar insight con Claude")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Error al generar el insight: {str(e)}",
+            detail="Error al generar el insight. Servicio de IA no disponible.",
         )
 
     now = datetime.now(tz=timezone.utc)
@@ -129,13 +140,49 @@ async def get_latest_insight(
     return insight
 
 
+@router.get(
+    "/",
+    response_model=PaginatedInsightResponse,
+    summary="Listar insights con paginación",
+)
+async def list_insights(
+    user_id: int | None = Query(default=None, description="Filtrar por usuario"),
+    limit: int = Query(default=10, ge=1, le=50, description="Número de insights a devolver"),
+    offset: int = Query(default=0, ge=0, description="Offset para paginación"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Devuelve el historial de insights generados, ordenado de más reciente a más antiguo.
+    Soporta paginación y filtro opcional por usuario.
+    """
+    from sqlalchemy import func
+
+    query = select(Insight).order_by(Insight.created_at.desc())
+    count_query = select(func.count()).select_from(Insight)
+
+    if user_id is not None:
+        query = query.where(Insight.user_id == user_id)
+        count_query = count_query.where(Insight.user_id == user_id)
+
+    query = query.limit(limit).offset(offset)
+
+    result = await db.execute(query)
+    insights = result.scalars().all()
+
+    count_result = await db.execute(count_query)
+    total_count = count_result.scalar() or 0
+
+    return PaginatedInsightResponse(items=list(insights), total_count=total_count)
+
 @router.post(
     "/chat",
     response_model=ChatResponse,
     summary="Chat interactivo con el analista IA",
 )
+@limiter.limit("10/minute")
 async def chat_with_ai(
     request: ChatRequest,
+    http_request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -160,9 +207,10 @@ async def chat_with_ai(
             summary_dict=summary,
         )
     except Exception as e:
+        logger.exception("Error en chat con analista IA")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Error al comunicarse con el analista IA: {str(e)}",
+            detail="Error al comunicarse con el analista IA. Servicio no disponible.",
         )
 
     return ChatResponse(
