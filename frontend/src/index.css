@@ -3,15 +3,61 @@
 @tailwind utilities;
 
 /* ===================================================================
-   DevMonitor·AI — Liquid Glass Design System
+   Glasstics — Liquid Glass Design System
    Dark-only theme with OKLCH color tokens, aurora backgrounds,
    glass surfaces, and fluid animations.
    =================================================================== */
 
 :root {
+  color-scheme: light;
+
+  /* ── Core palette (Light Theme) ── */
+  --background:        #f4f6fc;
+  --foreground:        #0f172a;
+  --card:              rgba(255, 255, 255, 0.55);
+  --popover:           rgba(255, 255, 255, 0.95);
+  --primary:           #4f46e5;
+  --primary-rgb:       79, 70, 229;
+  --secondary:         rgba(99, 102, 241, 0.15);
+  --muted-foreground:  #64748b;
+  --accent:            rgba(99, 102, 241, 0.25);
+  --destructive:       #ef4444;
+  --border:            rgba(148, 163, 184, 0.25);
+  --glass-border:      rgba(255, 255, 255, 0.7);
+  --ring:              #4f46e5;
+
+  /* ── Complex dynamic effects (Light) ── */
+  --aurora-bg: radial-gradient(ellipse 80% 60% at 15% 0%, rgba(99, 102, 241, 0.15), transparent), radial-gradient(ellipse 70% 50% at 95% 10%, rgba(79, 70, 229, 0.10), transparent), radial-gradient(ellipse 90% 70% at 50% 110%, rgba(147, 197, 253, 0.15), transparent);
+  --glass-bg: linear-gradient(150deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.45));
+  --glass-shadow: 0 8px 32px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(148, 163, 184, 0.1);
+  --glass-hover-border: rgba(79, 70, 229, 0.4);
+  --glass-hover-shadow: 0 16px 48px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(79, 70, 229, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(148, 163, 184, 0.1);
+  --sidebar-bg: linear-gradient(150deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+
+  /* ── Chart colors (Light) ── */
+  --chart-1: #6366f1;   /* indigo */
+  --chart-2: #f97316;   /* orange */
+  --chart-3: #06b6d4;   /* cyan */
+  --chart-4: #d946ef;   /* fuchsia */
+  --chart-5: #eab308;   /* yellow */
+  --chart-6: #8b5cf6;   /* purple */
+  --chart-7: #ef4444;   /* red */
+  --chart-8: #0ea5e9;   /* sky */
+  --chart-9: #10b981;   /* emerald */
+
+  /* ── Semantic ── */
+  --success:  #22c55e;
+  --warning:  #f59e0b;
+  --info:     #3b82f6;
+
+  /* ── Spacing / radius ── */
+  --radius: 1rem;
+}
+
+.dark {
   color-scheme: dark;
 
-  /* ── Core palette ── */
+  /* ── Core palette (Dark Theme) ── */
   --background:        #000004;
   --foreground:        #e8e6f0;
   --card:              rgba(26, 39, 76, 0.45);
@@ -26,48 +72,48 @@
   --glass-border:      rgba(200, 200, 240, 0.22);
   --ring:              #838ffa;
 
-  /* ── Chart colors ── */
-  --chart-1: #838ffa;   /* Violeta principal */
-  --chart-2: #5c6bc0;   /* Azul-índigo */
-  --chart-3: #b8b8f0;   /* Lila claro */
-  --chart-4: #3d5afe;   /* Azul profundo */
-  --chart-5: #ce93d8;   /* Malva */
+  /* ── Complex dynamic effects (Dark) ── */
+  --aurora-bg: radial-gradient(ellipse 80% 60% at 15% 0%, rgba(72, 88, 157, 0.28), transparent), radial-gradient(ellipse 70% 50% at 95% 10%, rgba(131, 143, 250, 0.20), transparent), radial-gradient(ellipse 90% 70% at 50% 110%, rgba(62, 75, 140, 0.22), transparent);
+  --glass-bg: linear-gradient(150deg, rgba(72, 88, 157, 0.18), rgba(26, 20, 56, 0.26));
+  --glass-shadow: 0 8px 32px rgba(2, 2, 20, 0.45), inset 0 1px 0 rgba(220, 220, 255, 0.14), inset 0 -1px 0 rgba(2, 2, 20, 0.30);
+  --glass-hover-border: rgba(131, 143, 250, 0.55);
+  --glass-hover-shadow: 0 16px 48px rgba(2, 2, 20, 0.55), 0 0 0 1px rgba(131, 143, 250, 0.25), inset 0 1px 0 rgba(220, 220, 255, 0.20), inset 0 -1px 0 rgba(2, 2, 20, 0.30);
+  --sidebar-bg: linear-gradient(150deg, rgba(72, 88, 157, 0.08), rgba(26, 20, 56, 0.15));
+
+  /* ── Chart colors (Dark) ── */
+  --chart-1: #A9B8FF;
+  --chart-2: #F89D4A;
+  --chart-3: #56dcd7;
+  --chart-4: #D946EF;
+  --chart-5: #F9DF62;
+  --chart-6: #8B5CF6;
+  --chart-7: #F78383;
+  --chart-8: #0EA5E9;
+  --chart-9: #76bca1;
 
   /* ── Semantic ── */
   --success:  #66bb6a;
   --warning:  #ffa726;
   --info:     #42a5f5;
-
-  /* ── Spacing / radius ── */
-  --radius: 1rem;
 }
 
 /* ── Aurora background ── */
 body {
   background-color: var(--background);
-  background-image:
-    radial-gradient(ellipse 80% 60% at 15% 0%, rgba(72, 88, 157, 0.28), transparent),
-    radial-gradient(ellipse 70% 50% at 95% 10%, rgba(131, 143, 250, 0.20), transparent),
-    radial-gradient(ellipse 90% 70% at 50% 110%, rgba(62, 75, 140, 0.22), transparent);
+  background-image: var(--aurora-bg);
   background-attachment: fixed;
   min-height: 100dvh;
+  font-weight: 250;
 }
 
 @layer components {
   /* ── Glass surface ── */
   .glass {
-    background: linear-gradient(
-      150deg,
-      rgba(72, 88, 157, 0.18),
-      rgba(26, 20, 56, 0.26)
-    );
+    background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(160%);
     -webkit-backdrop-filter: blur(24px) saturate(160%);
     border: 1px solid var(--glass-border);
-    box-shadow:
-      0 8px 32px rgba(2, 2, 20, 0.45),
-      inset 0 1px 0 rgba(220, 220, 255, 0.14),
-      inset 0 -1px 0 rgba(2, 2, 20, 0.30);
+    box-shadow: var(--glass-shadow);
   }
 
   /* ── Hover elevation ── */
@@ -78,12 +124,8 @@ body {
   }
   .glass-hover:hover {
     transform: translateY(-3px);
-    border-color: rgba(131, 143, 250, 0.55);
-    box-shadow:
-      0 16px 48px rgba(2, 2, 20, 0.55),
-      0 0 0 1px rgba(131, 143, 250, 0.25),
-      inset 0 1px 0 rgba(220, 220, 255, 0.20),
-      inset 0 -1px 0 rgba(2, 2, 20, 0.30);
+    border-color: var(--glass-hover-border);
+    box-shadow: var(--glass-hover-shadow);
   }
 
   /* ── Sheen sweep ── */
@@ -201,8 +243,9 @@ body {
 
 /* ── Apple-style Sidebar ── */
 :root {
-  --apple-spring: cubic-bezier(0.32, 0.72, 0, 1);
-  --anim-duration: 0.3s;
+  /* Efecto "Aladdino" (Genie Effect): curvatura fluida con estiramiento inicial y duración más lenta */
+  --apple-spring: cubic-bezier(0.6, 0.05, 0.15, 1);
+  --anim-duration: 0.55s;
 }
 
 .apple-sidebar {
@@ -225,7 +268,7 @@ body {
     background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 
   /* Custom transparency and blur for the sidebar */
-  background: linear-gradient(150deg, rgba(72, 88, 157, 0.08), rgba(26, 20, 56, 0.15)) !important;
+  background: var(--sidebar-bg) !important;
   backdrop-filter: blur(10px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(200%) !important;
 }

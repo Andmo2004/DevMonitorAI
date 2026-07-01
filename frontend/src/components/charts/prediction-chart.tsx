@@ -50,7 +50,7 @@ export function PredictionChart({ data, unit, metric }: PredictionChartProps) {
   const gradientLowerId = `gradientLower_${metric}`;
 
   return (
-    <ResponsiveContainer width="100%" height={320}>
+    <ResponsiveContainer width="100%" height={320} debounce={100}>
       <AreaChart
         data={formatted}
         margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
@@ -68,8 +68,8 @@ export function PredictionChart({ data, unit, metric }: PredictionChartProps) {
           </linearGradient>
           {/* Gradiente para la línea central */}
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
+            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid
@@ -133,7 +133,7 @@ export function PredictionChart({ data, unit, metric }: PredictionChartProps) {
           dataKey="value"
           name="Predicción"
           unit={unit === "EUR" ? "€" : unit}
-          stroke="var(--chart-1)"
+          stroke="var(--primary)"
           strokeWidth={2.5}
           fill={`url(#${gradientId})`}
           isAnimationActive={false}

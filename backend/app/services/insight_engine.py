@@ -45,7 +45,7 @@ def build_insight_prompt(summary: dict) -> str:
         for item in summary.get("prompt_type_distribution", [])
     ])
 
-    prompt = f"""Eres el asistente de gobernanza de IA de devmonitor·AI. Analiza los siguientes datos de uso de IA del equipo de desarrollo y genera un informe conciso con recomendaciones accionables.
+    prompt = f"""Eres el asistente de gobernanza de IA de Glasstics. Analiza los siguientes datos de uso de IA del equipo de desarrollo y genera un informe conciso con recomendaciones accionables.
 
 **Datos del período: {summary.get('period', 'última semana')}**
 
@@ -134,7 +134,7 @@ Datos actuales del dashboard:
 - Período: {summary_dict.get('period', 'N/A')}
 """
 
-    system_prompt = f"""Eres un analista de datos senior especializado en el dashboard de DevMonitor·AI, una plataforma de gobernanza y monitorización del uso de inteligencia artificial en equipos de desarrollo de software.
+    system_prompt = f"""Eres un analista de datos senior especializado en el dashboard de Glasstics, una plataforma de gobernanza y monitorización del uso de inteligencia artificial en equipos de desarrollo de software.
 
 Tu rol es responder preguntas sobre los datos del dashboard de forma clara, concisa y accionable. Basa tus respuestas en los datos proporcionados cuando estén disponibles.
 

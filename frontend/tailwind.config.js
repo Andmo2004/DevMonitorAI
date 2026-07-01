@@ -9,7 +9,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["Manrope", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
         dm: {
@@ -35,6 +35,10 @@ export default {
           3: "var(--chart-3)",
           4: "var(--chart-4)",
           5: "var(--chart-5)",
+          6: "var(--chart-6)",
+          7: "var(--chart-7)",
+          8: "var(--chart-8)",
+          9: "var(--chart-9)",
         },
       },
       borderRadius: {
