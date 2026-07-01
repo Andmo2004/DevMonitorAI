@@ -1,9 +1,12 @@
 """Router para eventos de IA y Git."""
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.security import verify_api_key
 from app.models import AIEvent
 from app.schemas.ai_event import AIEventCreate, AIEventResponse
 from app.schemas.git_event import GitEventCreate, GitEventResponse
@@ -13,7 +16,9 @@ from app.core.pricing import calculate_cost_eur
 # para controlar que timestamp si llega None no anule el post
 from datetime import datetime, timezone
 
-router = APIRouter(prefix="/events", tags=["events"])
+logger = logging.getLogger("devmonitor.events")
+
+router = APIRouter(prefix="/events", tags=["events"], dependencies=[Depends(verify_api_key)])
 
 
 @router.post(
@@ -42,9 +47,10 @@ async def register_ai_event(
             detail=str(e),
         )
     except Exception as e:
+        logger.exception("Error interno al registrar evento IA")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al registrar el evento: {str(e)}",
+            detail="Error interno al registrar el evento. Contacte al administrador.",
         )
 
 
@@ -73,9 +79,10 @@ async def register_git_event(
             detail=str(e),
         )
     except Exception as e:
+        logger.exception("Error interno al registrar evento Git")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al registrar el evento git: {str(e)}",
+            detail="Error interno al registrar el evento. Contacte al administrador.",
         )
 
 

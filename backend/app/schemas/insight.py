@@ -17,3 +17,8 @@ class InsightResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PaginatedInsightResponse(BaseModel):
+    items: list[InsightResponse]
+    total_count: int

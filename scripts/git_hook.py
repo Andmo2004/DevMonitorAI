@@ -89,7 +89,7 @@ def main() -> None:
         response = httpx.post(
             f"{API_URL}/api/v1/events/git",
             json=payload,
-            headers={"X-devmonitor-Key": API_KEY},
+            headers={"X-API-Key": API_KEY},
             timeout=3.0,
         )
         response.raise_for_status()

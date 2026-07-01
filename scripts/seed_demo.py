@@ -231,6 +231,33 @@ def generate_git_events_for_day(
 
 
 async def seed():
+    # --- Salvaguarda de entorno ---
+    allow_reset = os.getenv("ALLOW_SEED_RESET", "").lower()
+    db_url = os.getenv("DATABASE_URL", "")
+
+    # Bloquear si DATABASE_URL apunta a hosts de producción conocidos
+    production_hosts = ["supabase.co", "render.com", "neon.tech", "amazonaws.com", "azure.com"]
+    for host in production_hosts:
+        if host in db_url.lower():
+            print(f"❌ ERROR: DATABASE_URL contiene '{host}' (host de producción).")
+            print("   El seed NO se ejecutará contra entornos de producción.")
+            print("   Si realmente quieres hacerlo, elimina esta comprobación manualmente.")
+            sys.exit(1)
+
+    if allow_reset != "true":
+        print("⚠️  ADVERTENCIA: Este script ejecutará DROP TABLE sobre TODA la base de datos.")
+        print(f"   DATABASE_URL: {db_url or '(usando valor por defecto de config.py)'}")
+        print()
+        try:
+            confirm = input("   ¿Continuar? Escribe 'SI' para confirmar: ")
+            if confirm.strip() != "SI":
+                print("   Cancelado.")
+                sys.exit(0)
+        except EOFError:
+            print("   No se puede pedir confirmación (stdin no disponible).")
+            print("   Establece ALLOW_SEED_RESET=true para ejecutar sin confirmación.")
+            sys.exit(1)
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)

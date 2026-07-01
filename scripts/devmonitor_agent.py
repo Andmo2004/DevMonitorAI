@@ -37,7 +37,7 @@ def send_event(event_data: dict) -> bool:
         response = httpx.post(
             f"{API_BASE_URL}/api/v1/events/ai",
             json=event_data,
-            headers={"X-devmonitor-Key": API_KEY},
+            headers={"X-API-Key": API_KEY},
             timeout=5.0,
         )
         response.raise_for_status()
