@@ -32,7 +32,7 @@ export function CostBarChart({ data }: CostBarChartProps) {
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={240}>
+    <ResponsiveContainer width="100%" height={240} debounce={100}>
       <BarChart data={formatted} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
         <CartesianGrid
           strokeDasharray="3 3"
@@ -49,14 +49,19 @@ export function CostBarChart({ data }: CostBarChartProps) {
           tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={(v: number) => `${v.toFixed(1)}€`}
+          width={50}
+          tickFormatter={(v: any) => {
+            const num = Number(v);
+            return isNaN(num) ? "0.00€" : `${num.toFixed(2)}€`;
+          }}
         />
-        <Tooltip content={<GlassTooltip />} />
+        <Tooltip content={<GlassTooltip />} cursor={{ fill: 'var(--secondary)', opacity: 0.2 }} />
         <Bar
           dataKey="cost_eur"
           name="Coste (€)"
-          fill="var(--chart-2)"
+          fill="var(--chart-9)"
           radius={[6, 6, 0, 0]}
+          minPointSize={2}
           isAnimationActive={false}
         />
       </BarChart>

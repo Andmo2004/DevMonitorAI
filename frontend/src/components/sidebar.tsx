@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { cn } from "../lib/utils";
+import { useTheme } from "./theme-provider";
 
 const NAV_ITEMS = [
   {
@@ -46,6 +47,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
+  const { theme, setTheme } = useTheme();
+
   return (
     <aside 
       className={cn("apple-sidebar glass flex flex-col", collapsed && "collapsed")}
@@ -59,19 +62,18 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
       <div className={cn("flex flex-col h-full sidebar-content-wrapper", collapsed && "opacity-0")}>
         {/* Logo */}
         <div className="px-6 py-6 border-b border-dm-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 flex-shrink-0 rounded-xl bg-dm-primary/20 border border-dm-primary/30 flex items-center justify-center">
-              <svg className="w-5 h-5 text-dm-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-              </svg>
-            </div>
+          <div className="flex items-center justify-center gap-3">
+            <img 
+              src={theme === "light" ? "/icon-for-light-theme.svg" : "/icon-for-dark-theme.svg"} 
+              alt="Glasstics Icon" 
+              className="w-8 h-8 flex-shrink-0" 
+            />
             <div className="app-name-transition">
-              <h1 className="text-sm font-semibold text-dm-foreground tracking-tight">
-                DevMonitor<span className="text-dm-primary">·AI</span>
-              </h1>
-              <p className="text-[10px] text-dm-muted-foreground uppercase tracking-widest">
-                Governance Hub
-              </p>
+              <img 
+                src={theme === "light" ? "/name-for-light-theme.svg" : "/name-for-dark-theme.svg"} 
+                alt="Glasstics" 
+                className="h-5 mb-1" 
+              />
             </div>
           </div>
         </div>
@@ -104,25 +106,48 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-dm-border mt-auto">
-          <div className="flex items-center gap-2 app-name-transition">
-            <div className="live-dot flex-shrink-0" />
-            <span className="text-[10px] text-dm-muted-foreground uppercase tracking-wider font-medium whitespace-nowrap">
-              Sistema activo
-            </span>
+        <div className="px-4 py-4 border-t border-dm-border mt-auto flex flex-col gap-3">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setTheme(theme === "dark" ? "light" : "dark");
+            }}
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-dm-muted-foreground hover:text-dm-foreground hover:bg-black/5 dark:hover:bg-white/5 border border-transparent transition-all duration-200"
+          >
+            {theme === "dark" ? (
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+              </svg>
+            )}
+            <span className="whitespace-nowrap">Tema {theme === "dark" ? "Claro" : "Oscuro"}</span>
+          </button>
+
+          <div className="px-2">
+            <div className="flex items-center gap-2 app-name-transition">
+              <div className="live-dot flex-shrink-0" />
+              <span className="text-[10px] text-dm-muted-foreground uppercase tracking-wider font-medium whitespace-nowrap">
+                Sistema activo
+              </span>
+            </div>
+            <p className="text-[10px] text-dm-muted-foreground/60 mt-1 app-name-transition">
+              Hackathon Atmira 2026
+            </p>
           </div>
-          <p className="text-[10px] text-dm-muted-foreground/60 mt-2 app-name-transition">
-            Hackathon Atmira 2026
-          </p>
         </div>
       </div>
       
       {/* Absolute Logo visible only when collapsed */}
       {collapsed && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <svg className="w-6 h-6 text-dm-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-          </svg>
+          <img 
+            src={theme === "light" ? "/icon-for-light-theme.svg" : "/icon-for-dark-theme.svg"} 
+            alt="Glasstics Icon" 
+            className="w-8 h-8" 
+          />
         </div>
       )}
     </aside>

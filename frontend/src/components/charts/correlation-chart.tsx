@@ -35,7 +35,7 @@ export function CorrelationChart({ data }: CorrelationChartProps) {
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={288}>
+    <ResponsiveContainer width="100%" height={288} debounce={100}>
       <ComposedChart data={formatted} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
         <defs>
           <linearGradient id="gradientTokens" x1="0" y1="0" x2="0" y2="1">
@@ -88,7 +88,7 @@ export function CorrelationChart({ data }: CorrelationChartProps) {
           yAxisId="commits"
           dataKey="git_commits"
           name="Commits Git"
-          fill="var(--chart-2)"
+          fill="var(--chart-9)"
           radius={[4, 4, 0, 0]}
           barSize={20}
           opacity={0.8}

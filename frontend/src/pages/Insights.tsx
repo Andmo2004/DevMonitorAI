@@ -345,7 +345,7 @@ const Insights = () => {
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Pregunta algo al analista..."
                 disabled={chatLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-dm-glass-border text-sm text-dm-foreground placeholder:text-dm-muted-foreground/50 focus:outline-none focus:border-dm-primary/50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm text-dm-foreground placeholder:text-dm-muted-foreground/70 focus:outline-none focus:border-dm-primary/50 focus:bg-white dark:focus:bg-black/20 transition-all disabled:opacity-50"
               />
               <button
                 type="submit"

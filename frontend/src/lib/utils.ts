@@ -1,5 +1,5 @@
 /**
- * Utility functions for DevMonitor·AI frontend.
+ * Utility functions for Glasstics frontend.
  */
 
 /**

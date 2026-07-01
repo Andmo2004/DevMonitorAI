@@ -14,7 +14,7 @@ settings = get_settings()
 setup_logging(debug=settings.debug)
 
 app = FastAPI(
-    title="devmonitor·AI API",
+    title="Glasstics API",
     description="Gobierno y control del uso de IA en desarrollo",
     version=settings.app_version,
     docs_url="/docs",
@@ -53,4 +53,4 @@ async def health_check():
 
 @app.get("/", tags=["system"])
 async def root():
-    return {"message": "devmonitor·AI API — ver /docs para la documentación"}
+    return {"message": "Glasstics API — ver /docs para la documentación"}
