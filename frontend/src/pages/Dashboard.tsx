@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDashboardData, type TimeRange } from "../hooks/use-dashboard-data";
 import { getUsers } from "../api/client";
 import { KpiCard } from "../components/kpi-card";
@@ -43,24 +43,29 @@ const Dashboard = () => {
       .catch(() => {});
   }, []);
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return users.filter(
+      (u) =>
+        u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(userSearch.toLowerCase())
+    );
+  }, [users, userSearch]);
 
   const selectedUser = users.find((u) => u.id === selectedUserId);
 
-  const weeklyAverages = kpis ? (() => {
-    const sums = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const weeklyAverages = useMemo(() => {
+    if (!kpis || !kpis.correlation_data) return [];
+    const tokenSums = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const commitSums = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     
-    kpis.daily_usage.forEach((d) => {
+    kpis.correlation_data.forEach((d) => {
       const [year, month, dayStr] = d.date.split('-');
       const dateObj = new Date(Number(year), Number(month) - 1, Number(dayStr));
       const day = dateObj.getDay();
       if (day >= 1 && day <= 5) {
-        sums[day as keyof typeof sums] += d.tokens;
+        tokenSums[day as keyof typeof tokenSums] += d.ai_tokens;
+        commitSums[day as keyof typeof commitSums] += d.git_commits;
         counts[day as keyof typeof counts] += 1;
       }
     });
@@ -69,10 +74,18 @@ const Dashboard = () => {
     return [1, 2, 3, 4, 5].map((day, idx) => ({
       day: labels[idx],
       avgTokens: counts[day as keyof typeof counts] > 0 
-        ? Math.round(sums[day as keyof typeof sums] / counts[day as keyof typeof counts])
+        ? Math.round(tokenSums[day as keyof typeof tokenSums] / counts[day as keyof typeof counts])
+        : 0,
+      avgCommits: counts[day as keyof typeof counts] > 0
+        ? parseFloat((commitSums[day as keyof typeof commitSums] / counts[day as keyof typeof counts]).toFixed(1))
         : 0
     }));
-  })() : [];
+  }, [kpis]);
+
+  // Memoize sparkline data to prevent recreation on every render
+  const tokenSparkData = useMemo(() => kpis?.daily_usage.map((d) => ({ v: d.tokens })) || [], [kpis?.daily_usage]);
+  const costSparkData = useMemo(() => kpis?.daily_usage.map((d) => ({ v: d.cost_eur })) || [], [kpis?.daily_usage]);
+  const sessionSparkData = useMemo(() => kpis?.daily_usage.map((d) => ({ v: d.sessions })) || [], [kpis?.daily_usage]);
 
   return (
     <div className="space-y-6">
@@ -108,7 +121,7 @@ const Dashboard = () => {
                 aria-selected={range === r.value}
                 onClick={() => setRange(r.value)}
                 className={cn(
-                  "px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-300",
+                  "px-3.5 py-2 rounded-xl text-xs font-medium transition-colors duration-300",
                   range === r.value
                     ? "bg-dm-primary text-white glow-active"
                     : "text-dm-muted-foreground hover:text-dm-foreground"
@@ -123,7 +136,7 @@ const Dashboard = () => {
           <button
             onClick={() => setLive(!live)}
             className={cn(
-              "flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all glass-hover",
+              "flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors duration-200 glass-hover",
               live
                 ? "text-dm-primary"
                 : "text-dm-muted-foreground"
@@ -131,15 +144,15 @@ const Dashboard = () => {
           >
             {live ? (
               <>
-                <div className="live-dot" />
-                <span>Pausar</span>
+                <div className="w-2 h-2 rounded-full bg-dm-primary" />
+                <span className="uppercase tracking-normal">Pausar</span>
               </>
             ) : (
               <>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
                 </svg>
-                <span>Reanudar</span>
+                <span className="uppercase tracking-normal">Reanudar</span>
               </>
             )}
           </button>
@@ -147,8 +160,8 @@ const Dashboard = () => {
       </header>
 
       {/* Filter Bar - Alta prioridad visual y z-index */}
-      <div className="relative z-50 flex items-center gap-4 bg-dm-secondary/20 p-3 rounded-2xl border border-dm-glass-border">
-        <div className="text-xs font-semibold text-dm-muted-foreground uppercase tracking-wider ml-2">
+      <div className="relative flex items-center gap-4 bg-dm-secondary/20 p-3 rounded-2xl border border-dm-glass-border" style={{ zIndex: 'var(--z-dropdown)' }}>
+        <div className="text-xs font-semibold text-dm-muted-foreground uppercase tracking-normal ml-2">
           Filtro de Usuario:
         </div>
         <div className="relative">
@@ -192,7 +205,7 @@ const Dashboard = () => {
           
           {/* Dropdown flotante */}
           {showUserDropdown && (
-            <div className="absolute top-full mt-2 left-0 w-72 glass rounded-2xl border border-dm-glass-border shadow-2xl z-[100] overflow-hidden">
+            <div className="absolute top-full mt-2 left-0 w-72 glass glass-thick rounded-2xl border border-dm-glass-border shadow-2xl overflow-hidden" style={{ zIndex: 'var(--z-dropdown)' }}>
               <div className="p-3 border-b border-dm-glass-border bg-black/20">
                 <input
                   type="text"
@@ -277,7 +290,7 @@ const Dashboard = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
                 </svg>
               }
-              spark={kpis.daily_usage.map((d) => ({ v: d.tokens }))}
+              spark={tokenSparkData}
               style={{ animationDelay: "40ms" }}
             />
             <KpiCard
@@ -289,7 +302,7 @@ const Dashboard = () => {
                 </svg>
               }
               accent="var(--chart-2)"
-              spark={kpis.daily_usage.map((d) => ({ v: d.cost_eur }))}
+              spark={costSparkData}
               style={{ animationDelay: "100ms" }}
             />
             <KpiCard
@@ -302,13 +315,12 @@ const Dashboard = () => {
                 </svg>
               }
               accent="var(--chart-3)"
-              spark={kpis.daily_usage.map((d) => ({ v: d.sessions }))}
+              spark={sessionSparkData}
               style={{ animationDelay: "160ms" }}
             />
             <KpiCard
               label="Correlación IA↔Git"
               value={`${kpis.correlated_commits_ratio}%`}
-              delta={kpis.correlation_ratio > 50 ? 12.3 : -5.1}
               icon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />

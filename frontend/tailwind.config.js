@@ -41,9 +41,19 @@ export default {
           9: "var(--chart-9)",
         },
       },
+      /* Unified border-radius scale: 12 → 16 → 20 → 24px (mathematical progression) */
       borderRadius: {
-        "2xl": "1.25rem",
-        "3xl": "1.75rem",
+        lg: "0.75rem",     /* 12px — inputs, badges, icon containers */
+        xl: "1rem",        /* 16px — buttons, pills, internal elements */
+        "2xl": "1.25rem",  /* 20px — secondary cards, dropdowns */
+        "3xl": "1.5rem",   /* 24px — primary cards, panels */
+      },
+      /* Z-index token system — no more magic values */
+      zIndex: {
+        dropdown: "var(--z-dropdown)",
+        sticky: "var(--z-sticky)",
+        modal: "var(--z-modal)",
+        toast: "var(--z-toast)",
       },
       animation: {
         "float-in": "float-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { GlassCard } from "./glass-card";
+import { Button } from "./button";
 import { generateInsight, getLatestInsight } from "../api/client";
 import type { InsightResponse } from "../types/api";
 
@@ -65,28 +66,20 @@ export function InsightPanel({ initialInsight }: InsightPanelProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
             </svg>
           </button>
-          <button
+          <Button
             onClick={handleGenerate}
+            loading={loading}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-dm-primary text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 glow-active"
-          >
-            {loading ? (
-              <>
-                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Generando…
-              </>
-            ) : (
-              <>
+            icon={
+              !loading ? (
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" />
                 </svg>
-                Generar informe
-              </>
-            )}
-          </button>
+              ) : undefined
+            }
+          >
+            {loading ? "Generando…" : "Generar informe"}
+          </Button>
         </div>
       </div>
 

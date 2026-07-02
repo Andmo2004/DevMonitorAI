@@ -93,8 +93,7 @@ export function EventFeed({ pollInterval = 5000, userId }: EventFeedProps) {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="live-dot" />
-          <span className="text-[10px] font-medium text-dm-primary uppercase tracking-wider">
+          <span className="text-[10px] font-medium text-dm-primary uppercase tracking-normal">
             Live
           </span>
         </div>
@@ -115,19 +114,19 @@ export function EventFeed({ pollInterval = 5000, userId }: EventFeedProps) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-dm-border">
-                <th className="text-left py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-wider text-[10px]">
+                <th className="text-left py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-normal text-[10px]">
                   Tipo
                 </th>
-                <th className="text-left py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-wider text-[10px]">
+                <th className="text-left py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-normal text-[10px]">
                   Modelo
                 </th>
-                <th className="text-right py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-wider text-[10px]">
+                <th className="text-right py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-normal text-[10px]">
                   Tokens
                 </th>
-                <th className="text-right py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-wider text-[10px]">
+                <th className="text-right py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-normal text-[10px]">
                   Coste
                 </th>
-                <th className="text-right py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-wider text-[10px]">
+                <th className="text-right py-2 px-2 text-dm-muted-foreground font-medium uppercase tracking-normal text-[10px]">
                   Hora
                 </th>
               </tr>

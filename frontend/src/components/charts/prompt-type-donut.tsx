@@ -32,11 +32,13 @@ const LABEL_MAP: Record<string, string> = {
   other: "Otro",
 };
 
+import { memo } from "react";
+
 interface PromptTypeDonutProps {
   data: PromptTypeDistribution[];
 }
 
-export function PromptTypeDonut({ data }: PromptTypeDonutProps) {
+export const PromptTypeDonut = memo(function PromptTypeDonut({ data }: PromptTypeDonutProps) {
   if (!data.length) {
     return (
       <div className="h-60 flex items-center justify-center text-dm-muted-foreground text-sm">
@@ -79,4 +81,4 @@ export function PromptTypeDonut({ data }: PromptTypeDonutProps) {
       </PieChart>
     </ResponsiveContainer>
   );
-}
+});

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { GlassCard } from "../components/glass-card";
 import { getUsers, updateUserPolicy, deleteUser } from "../api/client";
 import type { UserResponse, UserPolicyUpdate } from "../types/api";
 import { cn } from "../lib/utils";
+import { Button } from "../components/button";
 
 const Governance = () => {
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -160,10 +161,10 @@ const Governance = () => {
           {users.map((user, i) => (
             <GlassCard
               key={user.id}
-              className="p-6 float-in"
+              className="p-4 sm:p-6 float-in"
               style={{ animationDelay: `${120 + i * 60}ms` }}
             >
-              <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4 sm:gap-6">
                 {/* User info */}
                 <div className="flex items-center gap-4 lg:w-56 flex-shrink-0">
                   <div className="w-10 h-10 rounded-xl bg-dm-secondary flex items-center justify-center text-sm font-semibold text-dm-primary">
@@ -185,13 +186,16 @@ const Governance = () => {
                 </div>
 
                 {/* Policies */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                   {/* Anonymize toggle */}
                   <div className="flex flex-col gap-2 items-start">
-                    <label className="text-[10px] text-dm-muted-foreground uppercase tracking-wider font-medium">
+                    <label className="text-[10px] text-dm-muted-foreground uppercase tracking-normal font-medium">
                       Anonimizar prompts
                     </label>
                     <button
+                      role="switch"
+                      aria-checked={user.anonymize}
+                      aria-label="Anonimizar prompts"
                       onClick={() =>
                         handlePolicyUpdate(user.id, {
                           anonymize: !user.anonymize,
@@ -216,7 +220,7 @@ const Governance = () => {
 
                   {/* Cost alert */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-[10px] text-dm-muted-foreground uppercase tracking-wider font-medium">
+                    <label className="text-[10px] text-dm-muted-foreground uppercase tracking-normal font-medium">
                       Alerta coste (€/día)
                     </label>
                     <input
@@ -239,7 +243,7 @@ const Governance = () => {
 
                   {/* Retention days */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-[10px] text-dm-muted-foreground uppercase tracking-wider font-medium">
+                    <label className="text-[10px] text-dm-muted-foreground uppercase tracking-normal font-medium">
                       Retención (días)
                     </label>
                     <select
@@ -300,28 +304,28 @@ const Governance = () => {
             Mostrando {page * pageSize + 1} a {Math.min((page + 1) * pageSize, totalCount)} de {totalCount} usuarios
           </p>
           <div className="flex gap-2">
-            <button 
+            <Button 
+              variant="secondary"
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="px-4 py-2 rounded-xl bg-dm-secondary/30 hover:bg-dm-secondary/50 border border-dm-glass-border text-dm-foreground disabled:opacity-50 text-sm font-medium transition-all"
             >
               Anterior
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant="secondary"
               onClick={() => setPage(p => p + 1)}
               disabled={(page + 1) * pageSize >= totalCount}
-              className="px-4 py-2 rounded-xl bg-dm-secondary/30 hover:bg-dm-secondary/50 border border-dm-glass-border text-dm-foreground disabled:opacity-50 text-sm font-medium transition-all"
             >
               Siguiente
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Toast */}
       {toast && (
-        <div className="fixed inset-x-0 bottom-6 flex justify-center z-50 float-in">
-          <div className="glass rounded-2xl px-4 py-2.5 text-sm text-dm-foreground shadow-xl">
+        <div className="fixed inset-x-0 bottom-6 flex justify-center float-in" style={{ zIndex: 'var(--z-toast)' }}>
+          <div className="glass glass-thick rounded-2xl px-4 py-2.5 text-sm text-dm-foreground shadow-xl">
             {toast}
           </div>
         </div>
@@ -329,45 +333,108 @@ const Governance = () => {
 
       {/* Delete Confirmation Modal */}
       {userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <GlassCard className="max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-dm-foreground mb-2">
-              Eliminar Usuario
-            </h3>
-            <p className="text-sm text-dm-muted-foreground mb-6">
-              ¿Estás seguro de que deseas eliminar a <strong>{userToDelete.username}</strong>? Esta acción no se puede deshacer y eliminará también todos los eventos asociados al usuario.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setUserToDelete(null)}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium text-dm-muted-foreground hover:text-dm-foreground transition-colors disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDeleteUser}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {isDeleting ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Eliminando...
-                  </>
-                ) : (
-                  "Eliminar"
-                )}
-              </button>
-            </div>
-          </GlassCard>
-        </div>
+        <DeleteModal
+          user={userToDelete}
+          isDeleting={isDeleting}
+          onCancel={() => setUserToDelete(null)}
+          onConfirm={handleDeleteUser}
+        />
       )}
     </div>
   );
 };
 
 export default Governance;
+
+/* ── Accessible Delete Confirmation Modal ── */
+interface DeleteModalProps {
+  user: UserResponse;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+function DeleteModal({ user, isDeleting, onCancel, onConfirm }: DeleteModalProps) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus cancel on mount
+  useEffect(() => {
+    cancelRef.current?.focus();
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isDeleting) {
+        onCancel();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel, isDeleting]);
+
+  // Simple focus trap between cancel and confirm buttons
+  const handleKeyDownTrap = (e: React.KeyboardEvent) => {
+    if (e.key !== "Tab") return;
+    const focusable = [cancelRef.current, confirmRef.current].filter(Boolean) as HTMLElement[];
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm float-in"
+      style={{ zIndex: 'var(--z-modal)' }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-modal-title"
+      onKeyDown={handleKeyDownTrap}
+    >
+      <GlassCard className="max-w-md w-full p-6 shadow-2xl" hover={false} material="thick">
+        <h3 id="delete-modal-title" className="text-lg font-semibold text-dm-foreground mb-2">
+          Eliminar Usuario
+        </h3>
+        <p className="text-sm text-dm-muted-foreground mb-6">
+          ¿Estás seguro de que deseas eliminar a <strong>{user.username}</strong>? Esta acción no se puede deshacer y eliminará también todos los eventos asociados al usuario.
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            ref={cancelRef}
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-dm-muted-foreground hover:text-dm-foreground transition-colors disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            ref={confirmRef}
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="px-4 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
+          >
+            {isDeleting ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Eliminando...
+              </>
+            ) : (
+              "Eliminar"
+            )}
+          </button>
+        </div>
+      </GlassCard>
+    </div>
+  );
+}

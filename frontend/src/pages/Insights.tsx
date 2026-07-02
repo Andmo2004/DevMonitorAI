@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { GlassCard } from "../components/glass-card";
+import { Button } from "../components/button";
 import { generateInsight, getLatestInsight, chatWithInsights } from "../api/client";
 import type { InsightResponse, ChatResponse } from "../types/api";
 import { cn } from "../lib/utils";
@@ -98,35 +99,27 @@ const Insights = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
             onClick={() => handleGenerate("week")}
+            loading={generating}
             disabled={generating}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dm-primary text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 glow-active"
-          >
-            {generating ? (
-              <>
-                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Generando…
-              </>
-            ) : (
-              <>
+            icon={
+              !generating ? (
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" />
                 </svg>
-                Generar informe semanal
-              </>
-            )}
-          </button>
-          <button
+              ) : undefined
+            }
+          >
+            {generating ? "Generando…" : "Generar informe semanal"}
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => handleGenerate("month")}
             disabled={generating}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass text-dm-foreground text-xs font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
           >
             Informe mensual
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -345,7 +338,7 @@ const Insights = () => {
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Pregunta algo al analista..."
                 disabled={chatLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm text-dm-foreground placeholder:text-dm-muted-foreground/70 focus:outline-none focus:border-dm-primary/50 focus:bg-white dark:focus:bg-black/20 transition-all disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm text-dm-foreground placeholder:text-dm-muted-foreground/70 focus:outline-none focus:border-dm-primary/50 focus:bg-white dark:focus:bg-black/20 transition-colors duration-200 disabled:opacity-50"
               />
               <button
                 type="submit"

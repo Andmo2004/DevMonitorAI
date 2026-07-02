@@ -10,11 +10,13 @@ import {
 import { GlassTooltip } from "./glass-tooltip";
 import type { DailyUsage } from "../../types/api";
 
+import { memo } from "react";
+
 interface CostBarChartProps {
   data: DailyUsage[];
 }
 
-export function CostBarChart({ data }: CostBarChartProps) {
+export const CostBarChart = memo(function CostBarChart({ data }: CostBarChartProps) {
   if (!data.length) {
     return (
       <div className="h-60 flex items-center justify-center text-dm-muted-foreground text-sm">
@@ -67,4 +69,4 @@ export function CostBarChart({ data }: CostBarChartProps) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});
