@@ -12,11 +12,13 @@ import {
 import { GlassTooltip } from "./glass-tooltip";
 import type { CorrelationPoint } from "../../types/api";
 
+import { memo } from "react";
+
 interface CorrelationChartProps {
   data: CorrelationPoint[];
 }
 
-export function CorrelationChart({ data }: CorrelationChartProps) {
+export const CorrelationChart = memo(function CorrelationChart({ data }: CorrelationChartProps) {
   if (!data.length) {
     return (
       <div className="h-72 flex items-center justify-center text-dm-muted-foreground text-sm">
@@ -97,4 +99,4 @@ export function CorrelationChart({ data }: CorrelationChartProps) {
       </ComposedChart>
     </ResponsiveContainer>
   );
-}
+});

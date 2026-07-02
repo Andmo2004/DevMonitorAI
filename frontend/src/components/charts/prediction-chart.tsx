@@ -11,13 +11,15 @@ import {
 import { GlassTooltip } from "./glass-tooltip";
 import type { PredictionPoint } from "../../types/api";
 
+import { memo } from "react";
+
 interface PredictionChartProps {
   data: PredictionPoint[];
   unit: string;
   metric: string;
 }
 
-export function PredictionChart({ data, unit, metric }: PredictionChartProps) {
+export const PredictionChart = memo(function PredictionChart({ data, unit, metric }: PredictionChartProps) {
   if (!data.length) {
     return (
       <div className="h-80 flex items-center justify-center text-dm-muted-foreground text-sm">
@@ -155,4 +157,4 @@ export function PredictionChart({ data, unit, metric }: PredictionChartProps) {
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});

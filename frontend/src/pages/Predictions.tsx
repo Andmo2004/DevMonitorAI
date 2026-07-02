@@ -70,7 +70,7 @@ const Predictions = () => {
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 float-in">
         <div>
           <h1 className="text-2xl font-semibold text-dm-foreground tracking-tight">
-            Predicciones ML
+            ML Predictions
           </h1>
           <p className="text-sm text-dm-muted-foreground mt-1">
             Proyecciones de uso y coste generadas por modelos de series temporales
@@ -90,7 +90,7 @@ const Predictions = () => {
               aria-selected={activeMetric === "tokens"}
               onClick={() => setActiveMetric("tokens")}
               className={cn(
-                "px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-300",
+                "px-3.5 py-2 rounded-xl text-xs font-medium transition-colors duration-300",
                 activeMetric === "tokens"
                   ? "bg-dm-primary text-white glow-active"
                   : "text-dm-muted-foreground hover:text-dm-foreground"
@@ -103,7 +103,7 @@ const Predictions = () => {
               aria-selected={activeMetric === "cost"}
               onClick={() => setActiveMetric("cost")}
               className={cn(
-                "px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-300",
+                "px-3.5 py-2 rounded-xl text-xs font-medium transition-colors duration-300",
                 activeMetric === "cost"
                   ? "bg-dm-primary text-white glow-active"
                   : "text-dm-muted-foreground hover:text-dm-foreground"
@@ -212,13 +212,13 @@ const Predictions = () => {
               </p>
               {day7 && (
                 <div className="flex gap-3 mt-2 text-[10px]">
-                  <span className="text-green-400">
+                  <span className="text-green-400 font-bold drop-shadow-md">
                     ↑ Opt:{" "}
                     {activeMetric === "tokens"
                       ? day7.upper_bound.toLocaleString("es-ES")
                       : `€${day7.upper_bound.toFixed(2)}`}
                   </span>
-                  <span className="text-red-400">
+                  <span className="text-red-400 font-bold drop-shadow-md">
                     ↓ Pes:{" "}
                     {activeMetric === "tokens"
                       ? day7.lower_bound.toLocaleString("es-ES")
@@ -264,13 +264,13 @@ const Predictions = () => {
               </p>
               {day15 && (
                 <div className="flex gap-3 mt-2 text-[10px]">
-                  <span className="text-green-400">
+                  <span className="text-green-400 font-bold drop-shadow-md">
                     ↑ Opt:{" "}
                     {activeMetric === "tokens"
                       ? day15.upper_bound.toLocaleString("es-ES")
                       : `€${day15.upper_bound.toFixed(2)}`}
                   </span>
-                  <span className="text-red-400">
+                  <span className="text-red-400 font-bold drop-shadow-md">
                     ↓ Pes:{" "}
                     {activeMetric === "tokens"
                       ? day15.lower_bound.toLocaleString("es-ES")

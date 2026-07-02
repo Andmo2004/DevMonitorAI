@@ -10,11 +10,13 @@ import {
 import { GlassTooltip } from "./glass-tooltip";
 import type { DailyUsage } from "../../types/api";
 
+import { memo } from "react";
+
 interface TrendChartProps {
   data: DailyUsage[];
 }
 
-export function TrendChart({ data }: TrendChartProps) {
+export const TrendChart = memo(function TrendChart({ data }: TrendChartProps) {
   if (!data.length) {
     return (
       <div className="h-72 flex items-center justify-center text-dm-muted-foreground text-sm">
@@ -72,4 +74,4 @@ export function TrendChart({ data }: TrendChartProps) {
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});

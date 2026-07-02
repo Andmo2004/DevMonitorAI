@@ -36,8 +36,7 @@ export function WidgetPanel({
         </div>
         {live && (
           <div className="flex items-center gap-1.5">
-            <div className="live-dot" />
-            <span className="text-[10px] font-medium text-dm-primary uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-dm-primary uppercase tracking-normal">
               Live
             </span>
           </div>
