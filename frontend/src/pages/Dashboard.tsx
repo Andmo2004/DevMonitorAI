@@ -160,7 +160,7 @@ const Dashboard = () => {
       </header>
 
       {/* Filter Bar - Alta prioridad visual y z-index */}
-      <div className="relative flex items-center gap-4 bg-dm-secondary/20 p-3 rounded-2xl border border-dm-glass-border" style={{ zIndex: 'var(--z-dropdown)' }}>
+      <div className="relative z-30 flex items-center gap-4 bg-dm-secondary/20 p-3 rounded-2xl border border-dm-glass-border">
         <div className="text-xs font-semibold text-dm-muted-foreground uppercase tracking-normal ml-2">
           Filtro de Usuario:
         </div>
@@ -205,7 +205,7 @@ const Dashboard = () => {
           
           {/* Dropdown flotante */}
           {showUserDropdown && (
-            <div className="absolute top-full mt-2 left-0 w-72 glass glass-thick rounded-2xl border border-dm-glass-border shadow-2xl overflow-hidden" style={{ zIndex: 'var(--z-dropdown)' }}>
+            <div className="absolute top-full mt-2 left-0 w-72 glass glass-thick rounded-2xl border border-dm-glass-border shadow-2xl overflow-hidden z-30">
               <div className="p-3 border-b border-dm-glass-border bg-black/20">
                 <input
                   type="text"
